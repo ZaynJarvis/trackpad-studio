@@ -26,7 +26,11 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         let color: NSColor
     }
 
-    /// Previous-frame state of a raw two-finger gesture, in view space.
+    /// Previous-frame state of a raw two-finger gesture, kept in NORMALIZED pad
+    /// coordinates. Storing view-space points here would silently corrupt the
+    /// gesture whenever the pad rect changed mid-gesture (device-size discovery,
+    /// window resize) — the baseline would be expressed in a rect that no
+    /// longer exists.
     private struct TwoFingerBaseline {
         var centroid: CGPoint
         var spread: CGFloat
@@ -47,7 +51,10 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     private var currentTouches: [TouchSample] = []
     /// Resting touches, render-only.
     private var restingTouches: [TouchSample] = []
-    private var currentDeviceSize = CGSize(width: 1.6, height: 1)
+    // Seeded from the last device we saw, so the pad rect is already the right
+    // shape at launch instead of snapping on the first touch.
+    private var currentDeviceSize = DeviceSizeStore.recalled
+        ?? CGSize(width: 1.6, height: 1)
     private var matchedFinger: MTFingerSample?
     private var currentCursorViewPoint: CGPoint?
     private var lastCursorViewPoint: CGPoint?
@@ -55,13 +62,8 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     private var activeDraft: Draft?
     private var isMouseDown = false
     private var currentPressure: CGFloat = 0
-    private var currentPressureStage = 0
-    private var paletteOpenedThisPress = false
     private var drawingSuppressedUntilRelease = false
-    private var textTriggerLatched = false
 
-    private var paletteAnchor: CGPoint?
-    private var paletteHoveredTool: BoardTool?
     private var textEditor: NSTextField?
     private var textEditorCanvasOrigin: CGPoint?
     private var isEndingTextEdit = false
@@ -69,19 +71,25 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     private var twoFingerBaseline: TwoFingerBaseline?
     private var isTwoFingerNavigating = false
     private var isThreeFingerDrawing = false
+    /// Identity of the finger acting as the pen for the current 3-finger
+    /// gesture. Locked at gesture start, never re-elected mid-gesture.
+    private var penFingerID: Int?
 
     private var interactionMode: InteractionMode = .zen
     private var cursorFrozen = false
     private var cursorTrackingArea: NSTrackingArea?
     private lazy var transparentCursor = Self.makeTransparentCursor()
     private var pollTimer: Timer?
-    private var resignKeyObserver: NSObjectProtocol?
+    private var windowObservers: [NSObjectProtocol] = []
     private weak var observedWindow: NSWindow?
+    /// Set when zen was interrupted by losing key focus, so it can be restored.
+    private var resumeZenOnKey = false
 
     private let drawThreshold: Double = 0.35
     private let statusHeight: CGFloat = 34
     private let toolbarWidth: CGFloat = 56
     private let toolbarItemHeight: CGFloat = 46
+    private let textButtonGap: CGFloat = 14
     private let edgeInset: CGFloat = 12
     /// On-screen point size of text at the moment it is typed.
     private let textBaseFontSize: CGFloat = 16
@@ -116,8 +124,8 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
     deinit {
         pollTimer?.invalidate()
-        if let resignKeyObserver {
-            NotificationCenter.default.removeObserver(resignKeyObserver)
+        for observer in windowObservers {
+            NotificationCenter.default.removeObserver(observer)
         }
         restoreCursorAssociation(force: true)
         NSCursor.arrow.set()
@@ -190,7 +198,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         drawTrackpadOverlay()
         drawTouchMarkers()
         drawToolbar()
-        drawPalette()
         drawCursor()
         drawStatusStrip()
     }
@@ -202,15 +209,9 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         case let .touches(touches):
             handleTouches(touches)
 
-        case let .pressure(pressure, stage):
+        case let .pressure(pressure, _):
+            // Pressure only drives stroke width now — deep press does nothing.
             currentPressure = min(1, max(0, CGFloat(pressure)))
-            currentPressureStage = stage
-            if interactionMode == .zen,
-               stage >= 2,
-               !paletteOpenedThisPress {
-                paletteOpenedThisPress = true
-                showPalette(at: preferredCursorPoint)
-            }
             if interactionMode == .zen {
                 updateSingleTouchInteraction()
             }
@@ -232,7 +233,11 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
         case let .scroll(dx, dy, _, _):
             guard interactionMode == .pointer else { return }
-            model.pan(by: CGPoint(x: CGFloat(dx), y: CGFloat(dy)))
+            // scrollingDelta is expressed for a y-DOWN content system and
+            // already carries the user's natural-scroll preference. This view
+            // is y-up, so Y (and only Y) needs negating for the content to
+            // follow the fingers. X is already correct.
+            model.pan(by: CGPoint(x: CGFloat(dx), y: -CGFloat(dy)))
             positionTextEditor()
             needsDisplay = true
 
@@ -250,11 +255,14 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         restingTouches = touches.filter(\.resting)
 
         // Device size still comes from the raw set: a resting-only frame
-        // carries a perfectly good deviceSize.
+        // carries a perfectly good deviceSize. Persist it so the next launch
+        // starts with the pad rect already correct.
         if let sample = touches.first,
            sample.deviceSize.width > 0,
-           sample.deviceSize.height > 0 {
+           sample.deviceSize.height > 0,
+           sample.deviceSize != currentDeviceSize {
             currentDeviceSize = sample.deviceSize
+            DeviceSizeStore.remember(sample.deviceSize)
         }
 
         // Every count transition below is in terms of ACTIVE touches only.
@@ -275,13 +283,7 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
         switch activeCount {
         case 0:
-            if interactionMode == .zen,
-               previousCount > 0,
-               paletteAnchor != nil,
-               let tool = paletteHoveredTool
-                    ?? currentCursorViewPoint.flatMap({ paletteTool(at: $0) }) {
-                selectTool(tool)
-            } else if interactionMode == .zen {
+            if interactionMode == .zen {
                 finishActiveDraft()
             } else {
                 cancelActiveDraft()
@@ -291,10 +293,7 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
             currentCursorViewPoint = nil
             isMouseDown = false
             resetPressureState()
-            paletteOpenedThisPress = false
-            paletteHoveredTool = nil
             drawingSuppressedUntilRelease = false
-            textTriggerLatched = false
             restoreCursorAssociation(force: true)
 
         case 1:
@@ -302,7 +301,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
                 cancelActiveDraft()
                 matchedFinger = nil
                 currentCursorViewPoint = nil
-                paletteHoveredTool = nil
                 restoreCursorAssociation(force: true)
                 needsDisplay = true
                 return
@@ -323,17 +321,19 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
         case 3:
             matchedFinger = nil
-            paletteHoveredTool = nil
-            textTriggerLatched = false
             if previousCount != 3 {
                 // A draft from a different gesture must not bleed into this one.
                 cancelActiveDraft()
+                penFingerID = nil
             }
+            // Once a 3-finger gesture has ended (the pen finger lifted while a
+            // replacement kept the count at 3), don't silently start a new one
+            // until the count leaves 3.
             if interactionMode == .zen,
-               paletteAnchor == nil,
-               textEditor == nil {
+               textEditor == nil,
+               previousCount != 3 || isThreeFingerDrawing {
                 updateThreeFingerDraw()
-            } else {
+            } else if textEditor != nil {
                 cancelActiveDraft()
                 currentCursorViewPoint = nil
             }
@@ -349,17 +349,13 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         cancelActiveDraft()
         matchedFinger = nil
         currentCursorViewPoint = nil
-        paletteHoveredTool = nil
-        textTriggerLatched = false
     }
 
     private func handleClick(down: Bool, location: CGPoint) {
         guard interactionMode == .zen else {
             isMouseDown = false
             resetPressureState()
-            if down, let tool = toolbarTool(at: location) {
-                selectTool(tool)
-            }
+            if down { handleToolbarClick(at: location) }
             return
         }
 
@@ -369,38 +365,33 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
         if down {
             isMouseDown = true
-
-            if paletteAnchor != nil {
-                if let tool = paletteHoveredTool ?? paletteTool(at: hitPoint) {
-                    selectTool(tool)
-                }
+            if handleToolbarClick(at: hitPoint) {
                 needsDisplay = true
                 return
             }
-
-            if let tool = toolbarTool(at: hitPoint) {
-                selectTool(tool)
-                needsDisplay = true
-                return
-            }
-
-            paletteOpenedThisPress = false
             updateSingleTouchInteraction()
             needsDisplay = true
             return
         }
 
-        if paletteAnchor != nil {
-            if let tool = paletteHoveredTool ?? paletteTool(at: hitPoint) {
-                selectTool(tool)
-            }
-        }
-
         isMouseDown = false
         resetPressureState()
-        paletteOpenedThisPress = false
         updateSingleTouchInteraction()
         needsDisplay = true
+    }
+
+    /// Left toolbar hit: a drawing tool, or the separated one-shot text button.
+    @discardableResult
+    private func handleToolbarClick(at point: CGPoint) -> Bool {
+        if textButtonRect.contains(point) {
+            beginTextEditing(atViewPoint: preferredCursorPoint)
+            return true
+        }
+        if let tool = toolbarTool(at: point) {
+            selectTool(tool)
+            return true
+        }
+        return false
     }
 
     private func handleKey(
@@ -439,7 +430,7 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
         if lowercased == "t" {
             guard interactionMode == .zen else { return }
-            selectTool(.text)
+            // One-shot action: the active drawing tool is untouched.
             beginTextEditing(atViewPoint: preferredCursorPoint)
             return
         }
@@ -451,16 +442,11 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         }
     }
 
-    /// Esc is the only mode key: it peels off the text editor, then the
-    /// palette, and otherwise toggles zen ⇄ pointer.
+    /// Esc is the only mode key: it peels off the text editor, and otherwise
+    /// toggles zen ⇄ pointer.
     private func handleEscape() {
         if textEditor != nil {
             cancelTextEditing()
-            return
-        }
-
-        if paletteAnchor != nil {
-            closePalette()
             return
         }
 
@@ -513,9 +499,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         let point = TrackpadGeometry.map(touch.pos, into: trackpadRect)
         currentCursorViewPoint = point
         lastCursorViewPoint = point
-        paletteHoveredTool = paletteAnchor == nil
-            ? nil
-            : paletteTool(at: point)
     }
 
     private var isDrawingRequested: Bool {
@@ -549,7 +532,7 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
               currentTouches.count == 1,
               let cursorPoint = currentCursorViewPoint else { return }
 
-        guard paletteAnchor == nil, textEditor == nil else {
+        guard textEditor == nil else {
             cancelActiveDraft()
             return
         }
@@ -557,18 +540,10 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         guard isDrawingRequested else {
             finishActiveDraft()
             drawingSuppressedUntilRelease = false
-            textTriggerLatched = false
             return
         }
 
         guard !drawingSuppressedUntilRelease else { return }
-
-        if currentTool == .text {
-            guard !textTriggerLatched else { return }
-            textTriggerLatched = true
-            beginTextEditing(atViewPoint: cursorPoint)
-            return
-        }
 
         let canvasPoint = model.viewToCanvas(cursorPoint, in: bounds)
         let width = forceAdjustedWidth
@@ -667,8 +642,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
                     color: draft.color
                 )
             )
-        case .text:
-            break
         }
     }
 
@@ -680,7 +653,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     private func selectTool(_ tool: BoardTool) {
         cancelActiveDraft()
         currentTool = tool
-        closePalette()
         if isDrawingRequested {
             drawingSuppressedUntilRelease = true
         }
@@ -691,18 +663,21 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
     /// Derives pan and zoom from the same pair of raw touches every frame, so
     /// both apply simultaneously — unlike the system gestures, where a
-    /// recognized pinch stops the scroll stream.
+    /// recognized pinch stops the scroll stream. There is deliberately NO
+    /// dominant-axis test, no gesture classification and no threshold that
+    /// latches one component: every frame applies whatever translation and
+    /// whatever scale the fingers actually show.
     private func updateTwoFingerNavigation() {
         guard currentTouches.count == 2 else {
             endTwoFingerNavigation()
             return
         }
 
-        let rect = trackpadRect
-        let a = TrackpadGeometry.map(currentTouches[0].pos, into: rect)
-        let b = TrackpadGeometry.map(currentTouches[1].pos, into: rect)
-        let centroid = CGPoint(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2)
-        let spread = hypot(b.x - a.x, b.y - a.y)
+        // Normalized pad space — see TwoFingerBaseline.
+        let p0 = currentTouches[0].pos
+        let p1 = currentTouches[1].pos
+        let centroid = CGPoint(x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2)
+        let spread = hypot(p1.x - p0.x, p1.y - p0.y)
 
         defer {
             twoFingerBaseline = TwoFingerBaseline(centroid: centroid, spread: spread)
@@ -712,11 +687,17 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         // No baseline yet (1→2, 3→2, gesture start): adopt it without moving.
         guard let baseline = twoFingerBaseline else { return }
 
-        let factor: CGFloat = (baseline.spread > 4 && spread > 4)
+        let rect = trackpadRect
+        // Both baseline and current are mapped through the SAME current rect,
+        // so a rect change between frames can't inject a phantom pan.
+        let previousCentroid = TrackpadGeometry.map(baseline.centroid, into: rect)
+        let currentCentroid = TrackpadGeometry.map(centroid, into: rect)
+
+        let factor: CGFloat = (baseline.spread > 0.01 && spread > 0.01)
             ? min(2, max(0.5, spread / baseline.spread))
             : 1
-        let anchor = model.viewToCanvas(baseline.centroid, in: bounds)
-        model.navigate(scale: factor, anchor: anchor, to: centroid, in: bounds)
+        let anchor = model.viewToCanvas(previousCentroid, in: bounds)
+        model.navigate(scale: factor, anchor: anchor, to: currentCentroid, in: bounds)
         positionTextEditor()
     }
 
@@ -728,24 +709,29 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     // MARK: - Three-finger force draw
 
     /// Three fingers draw with the active tool at full force, no click and no
-    /// per-finger size threshold: the centroid is the pen.
+    /// per-finger size threshold. The pen is the LEFTMOST finger at gesture
+    /// start and stays locked to that identity until release — a finger drifting
+    /// further left mid-stroke must not steal the pen.
     private func updateThreeFingerDraw() {
         guard currentTouches.count == 3 else { return }
 
-        let rect = trackpadRect
-        var centroid = CGPoint.zero
-        for touch in currentTouches {
-            let point = TrackpadGeometry.map(touch.pos, into: rect)
-            centroid.x += point.x / 3
-            centroid.y += point.y / 3
+        if penFingerID == nil {
+            penFingerID = currentTouches.min(by: { $0.pos.x < $1.pos.x })?.id
         }
-        currentCursorViewPoint = centroid
-        lastCursorViewPoint = centroid
+        guard let penID = penFingerID,
+              let pen = currentTouches.first(where: { $0.id == penID }) else {
+            // The pen finger lifted (replaced by another) — that ends the
+            // gesture and commits, exactly like dropping below three.
+            endThreeFingerDraw()
+            return
+        }
+
+        let penPoint = TrackpadGeometry.map(pen.pos, into: trackpadRect)
+        currentCursorViewPoint = penPoint
+        lastCursorViewPoint = penPoint
         isThreeFingerDrawing = true
 
-        guard currentTool != .text else { return }
-
-        let canvasPoint = model.viewToCanvas(centroid, in: bounds)
+        let canvasPoint = model.viewToCanvas(penPoint, in: bounds)
         let width = fullForceWidth
 
         guard var draft = activeDraft, draft.tool == currentTool else {
@@ -786,6 +772,7 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
     /// Dropping below three fingers commits the element rather than discarding it.
     private func endThreeFingerDraw() {
+        penFingerID = nil
         guard isThreeFingerDrawing else { return }
         isThreeFingerDrawing = false
         currentCursorViewPoint = nil
@@ -956,19 +943,17 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     private func enterPointerMode() {
         interactionMode = .pointer
         cancelActiveDraft()
-        closePalette()
         cancelTextEditing()
         endTwoFingerNavigation()
         isThreeFingerDrawing = false
+        penFingerID = nil
         currentTouches.removeAll(keepingCapacity: true)
         restingTouches.removeAll(keepingCapacity: true)
         matchedFinger = nil
         currentCursorViewPoint = nil
         isMouseDown = false
         resetPressureState()
-        paletteOpenedThisPress = false
         drawingSuppressedUntilRelease = false
-        textTriggerLatched = false
         restoreCursorAssociation(force: true)
         NSCursor.arrow.set()
         window?.invalidateCursorRects(for: self)
@@ -1006,7 +991,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
     private func resetPressureState() {
         currentPressure = 0
-        currentPressureStage = 0
     }
 
     private func updateWindowObservation() {
@@ -1014,20 +998,40 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
         restoreCursorAssociation(force: true)
         NSCursor.arrow.set()
-        if let resignKeyObserver {
-            NotificationCenter.default.removeObserver(resignKeyObserver)
-            self.resignKeyObserver = nil
+        for observer in windowObservers {
+            NotificationCenter.default.removeObserver(observer)
         }
+        windowObservers.removeAll()
 
         observedWindow = window
         guard let window else { return }
-        resignKeyObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.didResignKeyNotification,
-            object: window,
-            queue: .main
-        ) { [weak self] _ in
-            self?.enterPointerMode()
-        }
+
+        // Losing key must always release the cursor (hard safety rule) — but
+        // dropping to pointer mode silently is how a user ends up testing
+        // gestures in the mode where the OS makes them exclusive. Remember that
+        // we were in zen and restore it when the window comes back.
+        windowObservers.append(
+            NotificationCenter.default.addObserver(
+                forName: NSWindow.didResignKeyNotification,
+                object: window,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self else { return }
+                self.resumeZenOnKey = self.interactionMode == .zen
+                self.enterPointerMode()
+            }
+        )
+        windowObservers.append(
+            NotificationCenter.default.addObserver(
+                forName: NSWindow.didBecomeKeyNotification,
+                object: window,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self, self.resumeZenOnKey else { return }
+                self.resumeZenOnKey = false
+                self.enterZenMode()
+            }
+        )
     }
 
     // MARK: - Layout
@@ -1051,8 +1055,10 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         )
     }
 
+    /// Tools, then a divider, then the one-shot text button.
     private var toolbarRect: CGRect {
-        let height = toolbarItemHeight * CGFloat(BoardTool.allCases.count) + 12
+        let height = toolbarItemHeight * CGFloat(BoardTool.allCases.count)
+            + textButtonGap + toolbarItemHeight + 12
         let y = min(
             max(statusHeight + edgeInset, bounds.midY - height / 2),
             max(statusHeight + edgeInset, bounds.maxY - height - edgeInset)
@@ -1076,81 +1082,28 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         }
     }
 
+    /// Below the tools and visually detached — text is an action, never a mode,
+    /// so this button never renders as "selected".
+    private var textButtonRect: CGRect {
+        let rect = toolbarRect
+        let toolsHeight = toolbarItemHeight * CGFloat(BoardTool.allCases.count)
+        return CGRect(
+            x: rect.minX + 6,
+            y: rect.maxY - 6 - toolsHeight - textButtonGap - toolbarItemHeight,
+            width: rect.width - 12,
+            height: toolbarItemHeight
+        )
+    }
+
     private func toolbarTool(at point: CGPoint) -> BoardTool? {
         guard toolbarRect.contains(point) else { return nil }
         return toolbarItemRects().first(where: { $0.1.contains(point) })?.0
     }
 
-    // MARK: - Palette
-
     private var preferredCursorPoint: CGPoint {
         currentCursorViewPoint ??
             lastCursorViewPoint ??
             CGPoint(x: contentRect.midX, y: contentRect.midY)
-    }
-
-    private func showPalette(at point: CGPoint) {
-        guard interactionMode == .zen else { return }
-        cancelActiveDraft()
-        paletteAnchor = CGPoint(
-            x: min(bounds.maxX, max(bounds.minX, point.x)),
-            y: min(bounds.maxY, max(bounds.minY, point.y))
-        )
-        drawingSuppressedUntilRelease = isDrawingRequested
-        paletteHoveredTool = currentCursorViewPoint.flatMap {
-            paletteTool(at: $0)
-        }
-        needsDisplay = true
-    }
-
-    private func closePalette() {
-        paletteAnchor = nil
-        paletteHoveredTool = nil
-        needsDisplay = true
-    }
-
-    private static let paletteItemWidth: CGFloat = 74
-    private static let paletteHeight: CGFloat = 82
-
-    private var paletteRect: CGRect? {
-        guard let anchor = paletteAnchor else { return nil }
-
-        let width = Self.paletteItemWidth * CGFloat(BoardTool.allCases.count) + 16
-        let height = Self.paletteHeight
-        var x = anchor.x - width / 2
-        var y = anchor.y + 26
-
-        let minimumX = contentRect.minX
-        let maximumX = max(minimumX, bounds.maxX - width - edgeInset)
-        x = min(maximumX, max(minimumX, x))
-
-        if y + height > bounds.maxY - edgeInset {
-            y = anchor.y - height - 26
-        }
-        let minimumY = statusHeight + edgeInset
-        let maximumY = max(minimumY, bounds.maxY - height - edgeInset)
-        y = min(maximumY, max(minimumY, y))
-        return CGRect(x: x, y: y, width: width, height: height)
-    }
-
-    private func paletteItemRects() -> [(BoardTool, CGRect)] {
-        guard let paletteRect else { return [] }
-        return BoardTool.allCases.map { tool in
-            (
-                tool,
-                CGRect(
-                    x: paletteRect.minX + 8
-                        + CGFloat(tool.rawValue - 1) * Self.paletteItemWidth,
-                    y: paletteRect.minY + 7,
-                    width: Self.paletteItemWidth,
-                    height: paletteRect.height - 14
-                )
-            )
-        }
-    }
-
-    private func paletteTool(at point: CGPoint) -> BoardTool? {
-        paletteItemRects().first(where: { $0.1.contains(point) })?.0
     }
 
     // MARK: - Rendering
@@ -1279,8 +1232,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
                 width: draft.width,
                 color: draft.color
             )
-        case .text:
-            return
         }
         draw(element: element, alpha: 0.72)
     }
@@ -1488,31 +1439,36 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         path.stroke()
     }
 
+    /// Four corner brackets — a whisper of where the pad maps to, with no frame
+    /// around the artwork.
     private func drawTrackpadOverlay() {
         let rect = trackpadRect
-        let path = NSBezierPath(roundedRect: rect, xRadius: 18, yRadius: 18)
+        let arm = min(22, min(rect.width, rect.height) * 0.09)
+        guard arm > 2 else { return }
 
-        NSColor(calibratedWhite: 0.8, alpha: 0.018).setFill()
-        path.fill()
-        NSColor(calibratedWhite: 0.9, alpha: 0.16).setStroke()
-        path.lineWidth = 0.75
+        let path = NSBezierPath()
+        for (corner, dx, dy) in [
+            (CGPoint(x: rect.minX, y: rect.minY), 1.0, 1.0),
+            (CGPoint(x: rect.maxX, y: rect.minY), -1.0, 1.0),
+            (CGPoint(x: rect.minX, y: rect.maxY), 1.0, -1.0),
+            (CGPoint(x: rect.maxX, y: rect.maxY), -1.0, -1.0),
+        ] {
+            path.move(to: CGPoint(x: corner.x + arm * CGFloat(dx), y: corner.y))
+            path.line(to: corner)
+            path.line(to: CGPoint(x: corner.x, y: corner.y + arm * CGFloat(dy)))
+        }
+
+        NSColor(calibratedWhite: 0.95, alpha: 0.14).setStroke()
+        path.lineWidth = 1
+        path.lineCapStyle = .round
+        path.lineJoinStyle = .round
         path.stroke()
-
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 8.5, weight: .semibold),
-            .foregroundColor: NSColor(calibratedWhite: 0.9, alpha: 0.3),
-            .kern: 1.6,
-        ]
-        ("TRACKPAD" as NSString).draw(
-            at: CGPoint(x: rect.minX + 14, y: rect.maxY - 20),
-            withAttributes: attributes
-        )
     }
 
     private func drawEmptyStateHint() {
         guard !model.hasCreatedContent, activeDraft == nil else { return }
 
-        let text = "Touch the trackpad to draw · press deep for shapes · three fingers force-draw · Esc toggles zen / pointer"
+        let text = "Touch the trackpad to draw · pick a tool on the left · three fingers force-draw · Esc toggles zen / pointer"
         let attributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: 12.5, weight: .medium),
             .foregroundColor: NSColor(calibratedWhite: 0.95, alpha: 0.34),
@@ -1650,65 +1606,37 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
                     : NSColor(calibratedWhite: 0.9, alpha: 0.38)
             )
         }
+
+        drawTextButton()
     }
 
-    private func drawPalette() {
-        guard let rect = paletteRect else { return }
+    /// One-shot action, never "selected": a divider then a plain T.
+    private func drawTextButton() {
+        let itemRect = textButtonRect
+        let divider = NSBezierPath()
+        let y = itemRect.maxY + textButtonGap / 2
+        divider.move(to: CGPoint(x: itemRect.minX + 6, y: y))
+        divider.line(to: CGPoint(x: itemRect.maxX - 6, y: y))
+        divider.lineWidth = 1
+        NSColor(calibratedWhite: 1, alpha: 0.1).setStroke()
+        divider.stroke()
 
-        let background = NSBezierPath(roundedRect: rect, xRadius: 13, yRadius: 13)
-        NSGraphicsContext.saveGraphicsState()
-        applySoftShadow(blur: 20, offsetY: -6, alpha: 0.5)
-        NSColor(calibratedWhite: 0.12, alpha: 0.98).setFill()
-        background.fill()
-        NSGraphicsContext.restoreGraphicsState()
-
-        NSColor(calibratedWhite: 1, alpha: 0.12).setStroke()
-        background.lineWidth = 1
-        background.stroke()
-
-        for (tool, itemRect) in paletteItemRects() {
-            let active = tool == currentTool
-            let hovered = tool == paletteHoveredTool
-
-            if active || hovered {
-                let chip = NSBezierPath(
-                    roundedRect: itemRect.insetBy(dx: 3, dy: 2),
-                    xRadius: 9,
-                    yRadius: 9
-                )
-                (hovered ? inkColor.withAlphaComponent(0.28)
-                         : inkColor.withAlphaComponent(0.14)).setFill()
-                chip.fill()
-                if hovered {
-                    inkColor.withAlphaComponent(0.6).setStroke()
-                    chip.lineWidth = 1
-                    chip.stroke()
-                }
-            }
-
-            let tint = (active || hovered)
-                ? inkColor
-                : NSColor(calibratedWhite: 0.92, alpha: 0.7)
-            drawGlyph(
-                for: tool,
-                in: CGRect(
-                    x: itemRect.minX,
-                    y: itemRect.minY + 26,
-                    width: itemRect.width,
-                    height: itemRect.height - 32
-                ),
-                color: tint
-            )
-            drawCenteredLabel(
-                "\(tool.rawValue)  \(tool.name)",
-                centeredAtX: itemRect.midX,
-                y: itemRect.minY + 9,
-                font: .systemFont(ofSize: 9.5, weight: .medium),
-                color: (active || hovered)
-                    ? inkColor.withAlphaComponent(0.95)
-                    : NSColor(calibratedWhite: 0.9, alpha: 0.55)
-            )
-        }
+        let tint = NSColor(calibratedWhite: 0.92, alpha: 0.62)
+        let font = NSFont.systemFont(ofSize: 17, weight: .semibold)
+        drawCenteredLabel(
+            "T",
+            centeredAtX: itemRect.midX,
+            y: itemRect.minY + 16,
+            font: font,
+            color: tint
+        )
+        drawCenteredLabel(
+            "text",
+            centeredAtX: itemRect.midX,
+            y: itemRect.minY + 5,
+            font: .systemFont(ofSize: 8, weight: .medium),
+            color: NSColor(calibratedWhite: 0.9, alpha: 0.38)
+        )
     }
 
     /// Small vector icon for a tool, drawn to fit `rect`.
@@ -1721,20 +1649,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
             height: side
         )
         guard side > 2 else { return }
-
-        if tool == .text {
-            let font = NSFont.systemFont(ofSize: side * 0.95, weight: .semibold)
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: font,
-                .foregroundColor: color,
-            ]
-            let size = ("T" as NSString).size(withAttributes: attributes)
-            ("T" as NSString).draw(
-                at: CGPoint(x: box.midX - size.width / 2, y: box.midY - size.height / 2),
-                withAttributes: attributes
-            )
-            return
-        }
 
         let path = NSBezierPath()
         switch tool {
@@ -1771,8 +1685,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
             path.line(to: CGPoint(x: end.x - head, y: end.y))
             path.move(to: end)
             path.line(to: CGPoint(x: end.x, y: end.y - head))
-        case .text:
-            return
         }
 
         color.setStroke()
@@ -1810,13 +1722,16 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
             width: badgeWidth,
             height: 17
         )
-        accent.withAlphaComponent(0.18).setFill()
+        // Solid, not tinted: the mode decides whether two-finger pinch+pan is
+        // simultaneous (zen) or OS-exclusive (pointer), so it must be
+        // impossible to misread at a glance.
+        accent.setFill()
         NSBezierPath(roundedRect: badgeRect, xRadius: 5, yRadius: 5).fill()
         drawLabel(
             badge,
             at: CGPoint(x: badgeRect.minX + 8, y: badgeRect.minY + 4),
             font: badgeFont,
-            color: accent
+            color: NSColor(calibratedWhite: 0.06, alpha: 1)
         )
 
         var x = badgeRect.maxX + 12
@@ -1862,8 +1777,8 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         }
 
         let hints = zen
-            ? "1–6 tools · T text · 3 fingers force-draw · ⌘Z undo · Esc pointer"
-            : "Esc back to zen · click a tool"
+            ? "1–5 tools · T text · 3 fingers force-draw · ⌘Z undo · Esc pointer"
+            : "system gestures — Esc back to zen for pinch + pan together"
         let hintFont = NSFont.systemFont(ofSize: 10)
         let hintWidth = textWidth(hints, font: hintFont)
         drawLabel(

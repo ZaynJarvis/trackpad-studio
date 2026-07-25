@@ -1,12 +1,13 @@
 import AppKit
 
+/// Drawing tools only. Text is a one-shot action (`t`), not a mode — committing
+/// text must leave the active tool untouched.
 enum BoardTool: Int, CaseIterable {
     case pen = 1
     case line
     case rectangle
     case ellipse
     case arrow
-    case text
 
     var name: String {
         switch self {
@@ -15,7 +16,6 @@ enum BoardTool: Int, CaseIterable {
         case .rectangle: return "Rectangle"
         case .ellipse: return "Ellipse"
         case .arrow: return "Arrow"
-        case .text: return "Text"
         }
     }
 

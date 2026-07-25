@@ -282,7 +282,7 @@ final class CapabilityTabView: NSView {
 
     private var contacts: [Int: Contact] = [:]
     private var restingCount = 0
-    private var lastDeviceSize = CGSize(width: 160, height: 100)
+    private var lastDeviceSize = DeviceSizeStore.recalled ?? CGSize(width: 160, height: 100)
 
     private var pressureLevel = Eased()
     private var pressureStage = 0
@@ -1119,6 +1119,7 @@ final class CapabilityTabView: NSView {
     private func handle(_ samples: [TouchSample]) {
         if let size = samples.first?.deviceSize, size.width > 0, size.height > 0 {
             lastDeviceSize = size
+            DeviceSizeStore.remember(size)
         }
         restingCount = samples.reduce(0) { $0 + ($1.resting ? 1 : 0) }
         if restingCount > 0 { sawResting = true }

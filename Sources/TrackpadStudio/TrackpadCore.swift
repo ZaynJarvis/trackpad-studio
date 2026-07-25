@@ -88,6 +88,25 @@ final class TouchCaptureView: NSView {
     }
 }
 
+// MARK: - Remembered device size
+// The physical trackpad size is only reported with the first touch; persist it
+// so the pad outline uses the real aspect immediately on later launches.
+
+enum DeviceSizeStore {
+    private static let key = "trackpad.deviceSize"
+
+    static func remember(_ size: CGSize) {
+        guard size.width > 0, size.height > 0 else { return }
+        UserDefaults.standard.set([Double(size.width), Double(size.height)], forKey: key)
+    }
+
+    static var recalled: CGSize? {
+        guard let a = UserDefaults.standard.array(forKey: key) as? [Double], a.count == 2,
+              a[0] > 0, a[1] > 0 else { return nil }
+        return CGSize(width: a[0], height: a[1])
+    }
+}
+
 // MARK: - Geometry helper
 
 enum TrackpadGeometry {
