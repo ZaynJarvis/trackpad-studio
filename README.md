@@ -9,7 +9,7 @@ can secretly do — including weighing things (really).
 **Website:** [canvas.zaynjarvis.com](https://canvas.zaynjarvis.com) ·
 **Support:** [Buy me a coffee ☕](https://buymeacoffee.com/zaynjarvis?status=1)
 
-![The board — draw directly with your fingers](site/assets/board.png)
+![The board — draw directly with your fingers](docs/assets/board.png)
 
 ## Why a native Mac app
 
@@ -42,7 +42,7 @@ MultitouchSupport framework for per-finger contact size.
 - **Palm-safe** — resting thumbs/palms are filtered out of every gesture and
   rendered as faint ghost rings.
 
-![The guided tutorial panel](site/assets/tutorial.png)
+![The guided tutorial panel](docs/assets/tutorial.png)
 
 ## Install
 
