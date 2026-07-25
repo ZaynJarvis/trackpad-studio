@@ -75,9 +75,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     private var cursorTrackingArea: NSTrackingArea?
     private lazy var transparentCursor = Self.makeTransparentCursor()
     private var pollTimer: Timer?
-    private var longPressTimer: Timer?
-    private var longPressOrigin: CGPoint?
-    private var longPressMovedTooFar = false
     private var resignKeyObserver: NSObjectProtocol?
     private weak var observedWindow: NSWindow?
 
@@ -86,8 +83,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     private let toolbarWidth: CGFloat = 56
     private let toolbarItemHeight: CGFloat = 46
     private let edgeInset: CGFloat = 12
-    private let longPressDuration: TimeInterval = 0.5
-    private let longPressMovementTolerance: CGFloat = 7
     /// On-screen point size of text at the moment it is typed.
     private let textBaseFontSize: CGFloat = 16
     /// Offset from the text editor's frame origin to where its glyphs actually sit.
@@ -121,7 +116,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
     deinit {
         pollTimer?.invalidate()
-        longPressTimer?.invalidate()
         if let resignKeyObserver {
             NotificationCenter.default.removeObserver(resignKeyObserver)
         }
@@ -215,7 +209,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
                stage >= 2,
                !paletteOpenedThisPress {
                 paletteOpenedThisPress = true
-                cancelLongPress()
                 showPalette(at: preferredCursorPoint)
             }
             if interactionMode == .zen {
@@ -226,9 +219,8 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         case let .click(down, locationInView):
             handleClick(down: down, location: locationInView)
 
-        case let .drag(location):
-            guard currentTouches.isEmpty else { return }
-            updateLongPressMovement(at: location)
+        case .drag:
+            break
 
         case let .magnify(delta):
             // Zen mode navigates from raw two-finger touches instead — applying
@@ -299,7 +291,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
             currentCursorViewPoint = nil
             isMouseDown = false
             resetPressureState()
-            cancelLongPress()
             paletteOpenedThisPress = false
             paletteHoveredTool = nil
             drawingSuppressedUntilRelease = false
@@ -366,7 +357,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         guard interactionMode == .zen else {
             isMouseDown = false
             resetPressureState()
-            cancelLongPress()
             if down, let tool = toolbarTool(at: location) {
                 selectTool(tool)
             }
@@ -384,20 +374,17 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
                 if let tool = paletteHoveredTool ?? paletteTool(at: hitPoint) {
                     selectTool(tool)
                 }
-                cancelLongPress()
                 needsDisplay = true
                 return
             }
 
             if let tool = toolbarTool(at: hitPoint) {
                 selectTool(tool)
-                cancelLongPress()
                 needsDisplay = true
                 return
             }
 
             paletteOpenedThisPress = false
-            beginLongPress(at: hitPoint)
             updateSingleTouchInteraction()
             needsDisplay = true
             return
@@ -411,7 +398,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
         isMouseDown = false
         resetPressureState()
-        cancelLongPress()
         paletteOpenedThisPress = false
         updateSingleTouchInteraction()
         needsDisplay = true
@@ -448,17 +434,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
         if keyCode == 53 || chars == "\u{1b}" {
             handleEscape()
-            return
-        }
-
-        if lowercased == "s" {
-            guard interactionMode == .zen else { return }
-            if paletteAnchor == nil {
-                showPalette(at: preferredCursorPoint)
-            } else {
-                closePalette()
-            }
-            needsDisplay = true
             return
         }
 
@@ -538,7 +513,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         let point = TrackpadGeometry.map(touch.pos, into: trackpadRect)
         currentCursorViewPoint = point
         lastCursorViewPoint = point
-        updateLongPressMovement(at: point)
         paletteHoveredTool = paletteAnchor == nil
             ? nil
             : paletteTool(at: point)
@@ -984,7 +958,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         cancelActiveDraft()
         closePalette()
         cancelTextEditing()
-        cancelLongPress()
         endTwoFingerNavigation()
         isThreeFingerDrawing = false
         currentTouches.removeAll(keepingCapacity: true)
@@ -1034,48 +1007,6 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     private func resetPressureState() {
         currentPressure = 0
         currentPressureStage = 0
-    }
-
-    private func beginLongPress(at point: CGPoint) {
-        cancelLongPress()
-        longPressOrigin = point
-        longPressMovedTooFar = false
-
-        let timer = Timer(
-            timeInterval: longPressDuration,
-            repeats: false
-        ) { [weak self] _ in
-            guard let self else { return }
-            self.longPressTimer = nil
-            self.longPressOrigin = nil
-            guard self.interactionMode == .zen,
-                  self.isMouseDown,
-                  !self.longPressMovedTooFar,
-                  !self.paletteOpenedThisPress,
-                  self.paletteAnchor == nil else { return }
-
-            self.paletteOpenedThisPress = true
-            self.showPalette(at: self.preferredCursorPoint)
-        }
-        longPressTimer = timer
-        RunLoop.main.add(timer, forMode: .common)
-    }
-
-    private func updateLongPressMovement(at point: CGPoint) {
-        guard longPressTimer != nil,
-              let origin = longPressOrigin else { return }
-
-        if hypot(point.x - origin.x, point.y - origin.y)
-            > longPressMovementTolerance {
-            longPressMovedTooFar = true
-            cancelLongPress()
-        }
-    }
-
-    private func cancelLongPress() {
-        longPressTimer?.invalidate()
-        longPressTimer = nil
-        longPressOrigin = nil
     }
 
     private func updateWindowObservation() {
@@ -1581,7 +1512,7 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     private func drawEmptyStateHint() {
         guard !model.hasCreatedContent, activeDraft == nil else { return }
 
-        let text = "Touch the trackpad to draw · hold a click for shapes · three fingers force-draw · Esc toggles zen / pointer"
+        let text = "Touch the trackpad to draw · press deep for shapes · three fingers force-draw · Esc toggles zen / pointer"
         let attributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: 12.5, weight: .medium),
             .foregroundColor: NSColor(calibratedWhite: 0.95, alpha: 0.34),
@@ -1931,7 +1862,7 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         }
 
         let hints = zen
-            ? "1–6 tools · S palette · T text · 3 fingers force-draw · ⌘Z undo · Esc pointer"
+            ? "1–6 tools · T text · 3 fingers force-draw · ⌘Z undo · Esc pointer"
             : "Esc back to zen · click a tool"
         let hintFont = NSFont.systemFont(ofSize: 10)
         let hintWidth = textWidth(hints, font: hintFont)
