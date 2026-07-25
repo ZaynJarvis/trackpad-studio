@@ -816,6 +816,16 @@ final class CapabilityTabView: NSView {
         }
         y += 79
 
+        // Weight is the app's headline capability — keep it above the fold.
+        let weightHeight = weightCardHeight(cardWidth: cardWidth)
+        let weightRect = CGRect(x: cardX, y: y, width: cardWidth, height: weightHeight)
+        if drawing {
+            drawWeightCard(in: weightRect)
+        } else {
+            positionWeightControls(in: weightRect)
+        }
+        y += weightHeight + Metric.cardGap + 6
+
         for (index, lesson) in all.enumerated() {
             let height = lessonCardHeight(lesson, cardWidth: cardWidth)
             if drawing {
@@ -825,16 +835,7 @@ final class CapabilityTabView: NSView {
             }
             y += height + Metric.cardGap
         }
-
-        y += 6
-        let weightHeight = weightCardHeight(cardWidth: cardWidth)
-        let weightRect = CGRect(x: cardX, y: y, width: cardWidth, height: weightHeight)
-        if drawing {
-            drawWeightCard(in: weightRect)
-        } else {
-            positionWeightControls(in: weightRect)
-        }
-        y += weightHeight + Metric.cardGap + 4
+        y += 4
 
         if drawing {
             drawText("Press R to reset pinch · rotate · scroll",
