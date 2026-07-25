@@ -202,6 +202,46 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         drawStatusStrip()
     }
 
+    /// Seeds a small demo drawing (used by the --snapshot marketing/screenshot
+    /// mode in AppShell; never called during normal interaction).
+    func seedDemoContent() {
+        let blue = inkColor
+        let mint = NSColor(calibratedRed: 0.36, green: 0.86, blue: 0.65, alpha: 1)
+        let amber = NSColor(calibratedRed: 1.0, green: 0.78, blue: 0.35, alpha: 1)
+        let rose = NSColor(calibratedRed: 1.0, green: 0.45, blue: 0.68, alpha: 1)
+
+        var wave: [BoardStrokeSample] = []
+        for i in 0...60 {
+            let t = CGFloat(i) / 60
+            let x = 330 + t * 540
+            let y = 300 + sin(t * .pi * 3) * 42
+            let width = 3.5 + sin(t * .pi * 6) * 2
+            wave.append(BoardStrokeSample(point: CGPoint(x: x, y: y), width: max(2, width)))
+        }
+        model.append(.stroke(samples: wave, color: blue))
+
+        var peak: [BoardStrokeSample] = []
+        for (i, p) in [(360, 250), (450, 350), (520, 290), (610, 400), (700, 260)].enumerated() {
+            _ = i
+            peak.append(BoardStrokeSample(point: CGPoint(x: p.0, y: p.1), width: 4))
+        }
+        model.append(.stroke(samples: peak, color: mint))
+
+        model.append(.ellipse(rect: CGRect(x: 770, y: 470, width: 88, height: 88), width: 3, color: amber))
+        for angle in stride(from: 0.0, to: 360.0, by: 45.0) {
+            let rad = angle * .pi / 180
+            let center = CGPoint(x: 814, y: 514)
+            let start = CGPoint(x: center.x + cos(rad) * 56, y: center.y + sin(rad) * 56)
+            let end = CGPoint(x: center.x + cos(rad) * 74, y: center.y + sin(rad) * 74)
+            model.append(.line(start: start, end: end, width: 2, color: amber))
+        }
+
+        model.append(.rectangle(rect: CGRect(x: 356, y: 452, width: 168, height: 104), width: 3, color: rose))
+        model.append(.text(origin: CGPoint(x: 376, y: 492), string: "hello, trackpad", fontSize: 22, color: .white))
+        model.append(.arrow(start: CGPoint(x: 640, y: 560), end: CGPoint(x: 540, y: 520), width: 3, color: blue))
+        needsDisplay = true
+    }
+
     // MARK: - Input
 
     private func handle(_ event: InputEvent) {

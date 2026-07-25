@@ -3,6 +3,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow?
     private var tutorialPanel: NSPanel?
+    private var boardView: BoardTabView?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installMainMenu()
@@ -12,6 +13,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.window = window
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+
+        if let idx = CommandLine.arguments.firstIndex(of: "--snapshot"),
+           CommandLine.arguments.count > idx + 1 {
+            runSnapshotMode(directory: CommandLine.arguments[idx + 1])
+        }
+    }
+
+    /// Self-screenshot mode: renders the board (with demo content) and the
+    /// tutorial panel to PNGs, then quits. Needs no screen-recording permission
+    /// because an app may always rasterize its own views.
+    private func runSnapshotMode(directory: String) {
+        let dir = URL(fileURLWithPath: directory, isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        boardView?.seedDemoContent()
+        showTutorial(nil)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [self] in
+            if let board = window?.contentView {
+                writePNG(of: board, to: dir.appendingPathComponent("board.png"))
+            }
+            if let tutorial = tutorialPanel?.contentView {
+                writePNG(of: tutorial, to: dir.appendingPathComponent("tutorial.png"))
+            }
+            NSApp.terminate(nil)
+        }
+    }
+
+    private func writePNG(of view: NSView, to url: URL) {
+        guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+        view.cacheDisplay(in: view.bounds, to: rep)
+        if let data = rep.representation(using: .png, properties: [:]) {
+            try? data.write(to: url)
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -114,6 +148,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         board.frame = container.bounds
         board.autoresizingMask = [.width, .height]
         container.addSubview(board)
+        boardView = board
 
         let help = NSButton(title: "?", target: self, action: #selector(showTutorial(_:)))
         help.bezelStyle = .circular
