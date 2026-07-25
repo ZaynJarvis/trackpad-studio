@@ -19,13 +19,18 @@ enum BoardTool: Int, CaseIterable {
         }
     }
 
-    var paletteLabel: String {
-        "\(rawValue)  \(name)"
+    var statusName: String {
+        name.lowercased()
     }
 }
 
+struct BoardStrokeSample {
+    let point: CGPoint
+    let width: CGFloat
+}
+
 enum BoardElement {
-    case stroke(points: [CGPoint], width: CGFloat, color: NSColor)
+    case stroke(samples: [BoardStrokeSample], color: NSColor)
     case line(start: CGPoint, end: CGPoint, width: CGFloat, color: NSColor)
     case rectangle(rect: CGRect, width: CGFloat, color: NSColor)
     case ellipse(rect: CGRect, width: CGFloat, color: NSColor)
@@ -42,6 +47,7 @@ final class BoardModel {
     private(set) var elements: [BoardElement] = []
     private(set) var zoom: CGFloat = 1
     private(set) var pan: CGPoint = .zero
+    private(set) var hasCreatedContent = false
 
     func canvasToView(_ point: CGPoint, in viewBounds: CGRect) -> CGPoint {
         let center = CGPoint(x: viewBounds.midX, y: viewBounds.midY)
@@ -75,6 +81,7 @@ final class BoardModel {
 
     func append(_ element: BoardElement) {
         elements.append(element)
+        hasCreatedContent = true
     }
 
     @discardableResult
@@ -99,6 +106,30 @@ final class BoardModel {
             CGPoint(
                 x: -(anchoredCanvasPoint.x - viewCenter.x) * zoom,
                 y: -(anchoredCanvasPoint.y - viewCenter.y) * zoom
+            )
+        )
+    }
+
+    /// Simultaneous zoom + pan: scales by `factor`, then translates so `anchor`
+    /// (a canvas point) lands exactly on `viewPoint`. Because the pan is derived
+    /// from the post-clamp zoom, a clamped zoom cannot accumulate drift.
+    func navigate(
+        scale factor: CGFloat,
+        anchor: CGPoint,
+        to viewPoint: CGPoint,
+        in viewBounds: CGRect
+    ) {
+        guard factor.isFinite, factor > 0,
+              anchor.x.isFinite, anchor.y.isFinite,
+              viewPoint.x.isFinite, viewPoint.y.isFinite else { return }
+
+        zoom = min(Self.maximumZoom, max(Self.minimumZoom, zoom * factor))
+
+        let center = CGPoint(x: viewBounds.midX, y: viewBounds.midY)
+        pan = clampedPan(
+            CGPoint(
+                x: viewPoint.x - center.x - (anchor.x - center.x) * zoom,
+                y: viewPoint.y - center.y - (anchor.y - center.y) * zoom
             )
         )
     }
@@ -134,13 +165,20 @@ final class BoardModel {
         tolerance: CGFloat
     ) -> Bool {
         switch element {
-        case let .stroke(points, width, _):
-            let radius = tolerance + width / 2
-            if points.count == 1 {
-                return distance(points[0], point) <= radius
+        case let .stroke(samples, _):
+            guard let first = samples.first else { return false }
+            if samples.count == 1 {
+                return distance(first.point, point)
+                    <= tolerance + max(0, first.width) / 2
             }
-            return zip(points, points.dropFirst()).contains {
-                distanceFromSegment(point, start: $0.0, end: $0.1) <= radius
+            return zip(samples, samples.dropFirst()).contains { pair in
+                let radius = tolerance
+                    + max(0, max(pair.0.width, pair.1.width)) / 2
+                return distanceFromSegment(
+                    point,
+                    start: pair.0.point,
+                    end: pair.1.point
+                ) <= radius
             }
 
         case let .line(start, end, width, _),

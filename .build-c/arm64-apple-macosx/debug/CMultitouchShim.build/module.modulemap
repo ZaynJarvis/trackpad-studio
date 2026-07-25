@@ -1,0 +1,4 @@
+module CMultitouchShim {
+    umbrella header "/Users/bytedance/code/trackpad/Sources/CMultitouchShim/include/CMultitouchShim.h"
+    export *
+}

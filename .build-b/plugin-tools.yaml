@@ -1,0 +1,98 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "CMultitouchShim-arm64-apple-macosx-debug.module": ["<CMultitouchShim-arm64-apple-macosx-debug.module>"]
+  "PackageStructure": ["<PackageStructure>"]
+  "TrackpadStudio-arm64-apple-macosx-debug.exe": ["<TrackpadStudio-arm64-apple-macosx-debug.exe>"]
+  "TrackpadStudio-arm64-apple-macosx-debug.module": ["<TrackpadStudio-arm64-apple-macosx-debug.module>"]
+  "main": ["<CMultitouchShim-arm64-apple-macosx-debug.module>","<TrackpadStudio-arm64-apple-macosx-debug.exe>","<TrackpadStudio-arm64-apple-macosx-debug.module>"]
+  "test": ["<CMultitouchShim-arm64-apple-macosx-debug.module>","<TrackpadStudio-arm64-apple-macosx-debug.exe>","<TrackpadStudio-arm64-apple-macosx-debug.module>"]
+default: "main"
+nodes:
+  "/Users/bytedance/code/trackpad/Sources/CMultitouchShim/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+  "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+  "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio":
+    is-mutated: true
+commands:
+  "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/shim.c.o":
+    tool: clang
+    inputs: ["/Users/bytedance/code/trackpad/Sources/CMultitouchShim/shim.c"]
+    outputs: ["/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/shim.c.o"]
+    description: "Compiling CMultitouchShim shim.c"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang","-fobjc-arc","-target","arm64-apple-macosx13.0","-O0","-DSWIFT_PACKAGE=1","-DDEBUG=1","-fblocks","-index-store-path","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/index/store","-fmodules","-fmodule-name=CMultitouchShim","-fmodules-cache-path=/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/ModuleCache","-I","/Users/bytedance/code/trackpad/Sources/CMultitouchShim/include","-isysroot","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-fPIC","-g","-MD","-MT","dependencies","-MF","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/shim.c.d","-c","/Users/bytedance/code/trackpad/Sources/CMultitouchShim/shim.c","-o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/shim.c.o"]
+    deps: "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/shim.c.d"
+
+  "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio-entitlement.plist":
+    tool: write-auxiliary-file
+    inputs: ["<entitlement-plist>","<com.apple.security.get-task-allow>"]
+    outputs: ["/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio-entitlement.plist"]
+    description: "Write auxiliary file /Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio-entitlement.plist"
+
+  "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/AppShell.swift","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardModel.swift","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardTab.swift","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/CapabilityTab.swift","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/MultitouchBridge.swift","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/TrackpadCore.swift","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/main.swift"]
+    outputs: ["/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/sources"]
+    description: "Write auxiliary file /Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/sources"
+
+  "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.product/Objects.LinkFileList":
+    tool: write-auxiliary-file
+    inputs: ["<link-file-list>","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/shim.c.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/AppShell.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardModel.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardTab.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/CapabilityTab.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/MultitouchBridge.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/TrackpadCore.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/main.swift.o"]
+    outputs: ["/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.product/Objects.LinkFileList"]
+    description: "Write auxiliary file /Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.product/Objects.LinkFileList"
+
+  "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"]
+    outputs: ["/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+
+  "<CMultitouchShim-arm64-apple-macosx-debug.module>":
+    tool: phony
+    inputs: ["/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/shim.c.o"]
+    outputs: ["<CMultitouchShim-arm64-apple-macosx-debug.module>"]
+
+  "<TrackpadStudio-arm64-apple-macosx-debug.exe>":
+    tool: phony
+    inputs: ["<TrackpadStudio-arm64-apple-macosx-debug.exe-CodeSigning>"]
+    outputs: ["<TrackpadStudio-arm64-apple-macosx-debug.exe>"]
+
+  "<TrackpadStudio-arm64-apple-macosx-debug.module>":
+    tool: phony
+    inputs: ["/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/AppShell.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardModel.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardTab.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/CapabilityTab.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/MultitouchBridge.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/TrackpadCore.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/main.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/Modules/TrackpadStudio.swiftmodule"]
+    outputs: ["<TrackpadStudio-arm64-apple-macosx-debug.module>"]
+
+  "C.TrackpadStudio-arm64-apple-macosx-debug.exe":
+    tool: shell
+    inputs: ["/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/shim.c.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/AppShell.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardModel.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardTab.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/CapabilityTab.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/MultitouchBridge.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/TrackpadCore.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/main.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.product/Objects.LinkFileList"]
+    outputs: ["/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio"]
+    description: "Linking ./.build-b/arm64-apple-macosx/debug/TrackpadStudio"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-L","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug","-o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio","-module-name","TrackpadStudio","-Xlinker","-no_warn_duplicate_libraries","-emit-executable","-Xlinker","-alias","-Xlinker","_TrackpadStudio_main","-Xlinker","_main","-Xlinker","-rpath","-Xlinker","@loader_path","@/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.product/Objects.LinkFileList","-Xlinker","-rpath","-Xlinker","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-6.2/macosx","-target","arm64-apple-macosx13.0","-Xlinker","-add_ast_path","-Xlinker","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/Modules/TrackpadStudio.swiftmodule","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g"]
+
+  "C.TrackpadStudio-arm64-apple-macosx-debug.exe-entitlements":
+    tool: shell
+    inputs: ["/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio-entitlement.plist"]
+    outputs: ["<TrackpadStudio-arm64-apple-macosx-debug.exe-CodeSigning>"]
+    description: "Applying debug entitlements to ./.build-b/arm64-apple-macosx/debug/TrackpadStudio"
+    args: ["codesign","--force","--sign","-","--entitlements","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio-entitlement.plist","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio"]
+
+  "C.TrackpadStudio-arm64-apple-macosx-debug.module":
+    tool: shell
+    inputs: ["/Users/bytedance/code/trackpad/Sources/TrackpadStudio/AppShell.swift","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardModel.swift","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardTab.swift","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/CapabilityTab.swift","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/MultitouchBridge.swift","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/TrackpadCore.swift","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/main.swift","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/shim.c.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/sources"]
+    outputs: ["/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/AppShell.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardModel.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardTab.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/CapabilityTab.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/MultitouchBridge.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/TrackpadCore.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/main.swift.o","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/Modules/TrackpadStudio.swiftmodule"]
+    description: "Compiling Swift Module 'TrackpadStudio' (7 sources)"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-module-name","TrackpadStudio","-emit-dependencies","-emit-module","-emit-module-path","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/Modules/TrackpadStudio.swiftmodule","-output-file-map","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/output-file-map.json","-incremental","-c","@/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/sources","-I","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx13.0","-incremental","-enable-batch-mode","-serialize-diagnostics","-index-store-path","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/index/store","-Onone","-enable-testing","-j12","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-Xcc","-fmodule-map-file=/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/module.modulemap","-Xcc","-I","-Xcc","/Users/bytedance/code/trackpad/Sources/CMultitouchShim/include","-module-cache-path","/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-Xfrontend","-entry-point-function-name","-Xfrontend","TrackpadStudio_main","-swift-version","5","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g","-Xcc","-isysroot","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-Xcc","-fPIC","-Xcc","-g","-package-name","trackpad"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/bytedance/code/trackpad/Sources/CMultitouchShim/","/Users/bytedance/code/trackpad/Sources/TrackpadStudio/","/Users/bytedance/code/trackpad/Package.swift","/Users/bytedance/code/trackpad/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+

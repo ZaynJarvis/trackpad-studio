@@ -1,0 +1,388 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.TrackpadStudio-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/sources",
+      "importPath" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/AppShell.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardTab.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/CapabilityTab.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/MultitouchBridge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/TrackpadCore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/main.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/shim.c.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/sources"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "TrackpadStudio",
+      "moduleOutputPath" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/Modules/TrackpadStudio.swiftmodule",
+      "objects" : [
+        "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/AppShell.swift.o",
+        "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardModel.swift.o",
+        "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardTab.swift.o",
+        "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/CapabilityTab.swift.o",
+        "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/MultitouchBridge.swift.o",
+        "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/TrackpadCore.swift.o",
+        "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/main.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j12",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-Xcc",
+        "-fmodule-map-file=/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/module.modulemap",
+        "-Xcc",
+        "-I",
+        "-Xcc",
+        "/Users/bytedance/code/trackpad/Sources/CMultitouchShim/include",
+        "-module-cache-path",
+        "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "TrackpadStudio_main",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "trackpad"
+      ],
+      "outputFileMapPath" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/AppShell.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardModel.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardTab.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/CapabilityTab.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/MultitouchBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/TrackpadCore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/main.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/Modules/TrackpadStudio.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/AppShell.swift",
+        "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardModel.swift",
+        "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardTab.swift",
+        "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/CapabilityTab.swift",
+        "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/MultitouchBridge.swift",
+        "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/TrackpadCore.swift",
+        "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/main.swift"
+      ],
+      "tempsPath" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "TrackpadStudio" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "TrackpadStudio",
+      "-package-name",
+      "trackpad",
+      "-c",
+      "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/AppShell.swift",
+      "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardModel.swift",
+      "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardTab.swift",
+      "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/CapabilityTab.swift",
+      "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/MultitouchBridge.swift",
+      "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/TrackpadCore.swift",
+      "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/main.swift",
+      "-I",
+      "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j12",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-Xcc",
+      "-fmodule-map-file=/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/module.modulemap",
+      "-Xcc",
+      "-I",
+      "-Xcc",
+      "/Users/bytedance/code/trackpad/Sources/CMultitouchShim/include",
+      "-module-cache-path",
+      "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "TrackpadStudio_main",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "trackpad",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "CMultitouchShim" : [
+
+    ],
+    "TrackpadStudio" : [
+      "CMultitouchShim"
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio-entitlement.plist" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<entitlement-plist>"
+        },
+        {
+          "kind" : "virtual",
+          "name" : "<com.apple.security.get-task-allow>"
+        }
+      ],
+      "outputFilePath" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio-entitlement.plist"
+    },
+    "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/AppShell.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardTab.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/CapabilityTab.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/MultitouchBridge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/TrackpadCore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/main.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/sources"
+    },
+    "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/CMultitouchShim.build/shim.c.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/AppShell.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardModel.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/BoardTab.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/CapabilityTab.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/MultitouchBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/TrackpadCore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.build/main.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/TrackpadStudio.product/Objects.LinkFileList"
+    },
+    "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/bytedance/code/trackpad/.build-b/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

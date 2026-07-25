@@ -2,6 +2,7 @@ import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow?
+    private var tutorialPanel: NSPanel?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installMainMenu()
@@ -21,6 +22,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         true
     }
 
+    @objc func showTutorial(_ sender: Any?) {
+        let panel: NSPanel
+        if let existing = tutorialPanel {
+            panel = existing
+        } else {
+            panel = NSPanel(
+                contentRect: NSRect(x: 0, y: 0, width: 900, height: 640),
+                styleMask: [.titled, .closable, .resizable],
+                backing: .buffered,
+                defer: false
+            )
+            panel.title = "Trackpad Tutorial"
+            panel.minSize = NSSize(width: 800, height: 560)
+            panel.isReleasedWhenClosed = false
+            panel.contentView = CapabilityTabView()
+            panel.center()
+            tutorialPanel = panel
+        }
+        panel.makeKeyAndOrderFront(nil)
+    }
+
     private func installMainMenu() {
         let mainMenu = NSMenu()
 
@@ -36,6 +58,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         aboutItem.target = NSApp
         appMenu.addItem(aboutItem)
+        appMenu.addItem(.separator())
+
+        let tutorialItem = NSMenuItem(
+            title: "Trackpad Tutorial",
+            action: #selector(showTutorial(_:)),
+            keyEquivalent: "t"
+        )
+        tutorialItem.keyEquivalentModifierMask = .command
+        tutorialItem.target = self
+        appMenu.addItem(tutorialItem)
         appMenu.addItem(.separator())
 
         let quitItem = NSMenuItem(
@@ -75,20 +107,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.minSize = NSSize(width: 900, height: 600)
         window.center()
 
-        let tabView = NSTabView(frame: window.contentView?.bounds ?? .zero)
-        tabView.autoresizingMask = [.width, .height]
+        let container = NSView(frame: window.contentView?.bounds ?? .zero)
+        container.autoresizingMask = [.width, .height]
 
-        let capabilityItem = NSTabViewItem(identifier: "capability")
-        capabilityItem.label = "Capability"
-        capabilityItem.view = CapabilityTabView()
-        tabView.addTabViewItem(capabilityItem)
+        let board = BoardTabView()
+        board.frame = container.bounds
+        board.autoresizingMask = [.width, .height]
+        container.addSubview(board)
 
-        let boardItem = NSTabViewItem(identifier: "board")
-        boardItem.label = "Board"
-        boardItem.view = BoardTabView()
-        tabView.addTabViewItem(boardItem)
+        let help = NSButton(title: "?", target: self, action: #selector(showTutorial(_:)))
+        help.bezelStyle = .circular
+        help.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
+        help.toolTip = "Trackpad Tutorial (⌘T)"
+        help.sizeToFit()
+        help.frame.origin = CGPoint(
+            x: container.bounds.maxX - help.frame.width - 12,
+            y: container.bounds.maxY - help.frame.height - 12
+        )
+        help.autoresizingMask = [.minXMargin, .minYMargin]
+        container.addSubview(help)
 
-        window.contentView = tabView
+        window.contentView = container
         return window
     }
 }

@@ -1,0 +1,54 @@
+{
+  "": {
+    "swift-dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/primary.swiftdeps"
+  },
+  "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/AppShell.swift": {
+    "dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/AppShell.d",
+    "object": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/AppShell.swift.o",
+    "swiftmodule": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/AppShell~partial.swiftmodule",
+    "swift-dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/AppShell.swiftdeps",
+    "diagnostics": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/AppShell.dia"
+  },
+  "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardModel.swift": {
+    "dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/BoardModel.d",
+    "object": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/BoardModel.swift.o",
+    "swiftmodule": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/BoardModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/BoardModel.swiftdeps",
+    "diagnostics": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/BoardModel.dia"
+  },
+  "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/BoardTab.swift": {
+    "dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/BoardTab.d",
+    "object": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/BoardTab.swift.o",
+    "swiftmodule": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/BoardTab~partial.swiftmodule",
+    "swift-dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/BoardTab.swiftdeps",
+    "diagnostics": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/BoardTab.dia"
+  },
+  "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/CapabilityTab.swift": {
+    "dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/CapabilityTab.d",
+    "object": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/CapabilityTab.swift.o",
+    "swiftmodule": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/CapabilityTab~partial.swiftmodule",
+    "swift-dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/CapabilityTab.swiftdeps",
+    "diagnostics": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/CapabilityTab.dia"
+  },
+  "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/MultitouchBridge.swift": {
+    "dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/MultitouchBridge.d",
+    "object": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/MultitouchBridge.swift.o",
+    "swiftmodule": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/MultitouchBridge~partial.swiftmodule",
+    "swift-dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/MultitouchBridge.swiftdeps",
+    "diagnostics": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/MultitouchBridge.dia"
+  },
+  "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/TrackpadCore.swift": {
+    "dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/TrackpadCore.d",
+    "object": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/TrackpadCore.swift.o",
+    "swiftmodule": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/TrackpadCore~partial.swiftmodule",
+    "swift-dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/TrackpadCore.swiftdeps",
+    "diagnostics": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/TrackpadCore.dia"
+  },
+  "/Users/bytedance/code/trackpad/Sources/TrackpadStudio/main.swift": {
+    "dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/main.d",
+    "object": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/main.swift.o",
+    "swiftmodule": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/main~partial.swiftmodule",
+    "swift-dependencies": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/main.swiftdeps",
+    "diagnostics": "/Users/bytedance/code/trackpad/.build-c/arm64-apple-macosx/debug/TrackpadStudio.build/main.dia"
+  }
+}
