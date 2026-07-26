@@ -85,7 +85,15 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     /// Set when zen was interrupted by losing key focus, so it can be restored.
     private var resumeZenOnKey = false
 
-    private let drawThreshold: Double = 0.35
+    /// Contact size at which a touch stops being a hover cursor and starts
+    /// drawing. Trackpads vary in sensitivity, so [ / ] tune this live and
+    /// the value persists across launches.
+    private var drawThreshold: Double = {
+        let stored = UserDefaults.standard.double(forKey: "drawThreshold")
+        return stored > 0 ? stored : 0.35
+    }() {
+        didSet { UserDefaults.standard.set(drawThreshold, forKey: "drawThreshold") }
+    }
     private let statusHeight: CGFloat = 34
     private let toolbarWidth: CGFloat = 56
     private let toolbarItemHeight: CGFloat = 46
@@ -465,6 +473,13 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
         if keyCode == 53 || chars == "\u{1b}" {
             handleEscape()
+            return
+        }
+
+        if lowercased == "[" || lowercased == "]" {
+            let delta = lowercased == "[" ? -0.05 : 0.05
+            drawThreshold = min(1.5, max(0.05, drawThreshold + delta))
+            needsDisplay = true
             return
         }
 
@@ -1805,6 +1820,23 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         )
         x += textWidth(zoomText, font: zoomFont) + 10
 
+        if zen && MultitouchReader.shared.isAvailable {
+            // Live contact size vs the draw threshold, so tuning with [ / ]
+            // has immediate visible feedback on this trackpad.
+            let size = matchedFinger?.size
+            let touchText = size.map {
+                String(format: "touch %.2f / %.2f", $0, drawThreshold)
+            } ?? String(format: "touch ≥ %.2f", drawThreshold)
+            let active = (size ?? 0) >= drawThreshold
+            drawLabel(
+                touchText,
+                at: CGPoint(x: x, y: baseline),
+                font: zoomFont,
+                color: active ? inkColor : mutedColor
+            )
+            x += textWidth(touchText, font: zoomFont) + 10
+        }
+
         if let live = isTwoFingerNavigating
             ? "pinch + pan"
             : (isThreeFingerDrawing ? "3-finger force draw" : nil) {
@@ -1817,7 +1849,7 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         }
 
         let hints = zen
-            ? "1–5 tools · T text · 3 fingers force-draw · ⌘Z undo · Esc pointer"
+            ? "1–5 tools · T text · [ ] touch level · ⌘Z undo · Esc pointer"
             : "system gestures — Esc back to zen for pinch + pan together"
         let hintFont = NSFont.systemFont(ofSize: 10)
         let hintWidth = textWidth(hints, font: hintFont)
