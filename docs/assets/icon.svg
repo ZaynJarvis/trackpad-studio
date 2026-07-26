@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Trackpad Studio app icon">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6E68FF"/>
+      <stop offset="0.48" stop-color="#5147E8"/>
+      <stop offset="1" stop-color="#29247F"/>
+    </linearGradient>
+    <linearGradient id="surface" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#D9E2FF"/>
+    </linearGradient>
+    <linearGradient id="ink" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22D3EE"/>
+      <stop offset="0.52" stop-color="#0878F9"/>
+      <stop offset="1" stop-color="#1737B8"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.78"/>
+      <stop offset="1" stop-color="#B9C8FF" stop-opacity="0.28"/>
+    </linearGradient>
+    <filter id="iconShadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#171344" flood-opacity="0.34"/>
+    </filter>
+    <filter id="surfaceShadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#16105E" flood-opacity="0.34"/>
+    </filter>
+    <filter id="inkShadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#123DAF" flood-opacity="0.30"/>
+    </filter>
+    <clipPath id="surfaceClip">
+      <rect x="216" y="256" width="592" height="520" rx="92"/>
+    </clipPath>
+  </defs>
+
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#background)" filter="url(#iconShadow)"/>
+  <path d="M285 113H739C834 113 911 190 911 285V411C726 337 438 337 113 462V285C113 190 190 113 285 113Z"
+        fill="#FFFFFF" opacity="0.075"/>
+  <rect x="113" y="113" width="798" height="798" rx="172" fill="none" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="3"/>
+
+  <g filter="url(#surfaceShadow)">
+    <rect x="216" y="256" width="592" height="520" rx="92" fill="url(#surface)"/>
+    <rect x="225" y="265" width="574" height="502" rx="83" fill="none" stroke="url(#rim)" stroke-width="8"/>
+  </g>
+
+  <g clip-path="url(#surfaceClip)">
+    <path d="M240 330C399 281 625 286 784 350" fill="none" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round" opacity="0.20"/>
+    <path d="M271 731C425 767 620 768 763 720" fill="none" stroke="#8BA0E7" stroke-width="8" stroke-linecap="round" opacity="0.22"/>
+
+    <circle cx="431" cy="395" r="49" fill="#697CE0" opacity="0.12"/>
+    <circle cx="598" cy="382" r="49" fill="#697CE0" opacity="0.12"/>
+    <circle cx="431" cy="395" r="30" fill="none" stroke="#6678D6" stroke-width="5" opacity="0.30"/>
+    <circle cx="598" cy="382" r="30" fill="none" stroke="#6678D6" stroke-width="5" opacity="0.30"/>
+
+    <g filter="url(#inkShadow)">
+      <path d="M280 667
+               C331 658 368 626 400 580
+               C438 525 459 446 514 427
+               C568 408 624 437 652 483
+               C684 535 677 588 643 624
+               C615 653 576 662 544 648
+               C520 637 508 615 514 594
+               C519 577 536 570 551 578
+               C570 588 588 590 604 575
+               C625 555 622 518 603 494
+               C584 470 553 463 528 477
+               C490 498 469 559 436 606
+               C395 665 345 696 286 692
+               C274 691 267 683 268 675
+               C269 671 273 668 280 667Z"
+            fill="url(#ink)"/>
+      <path d="M283 671C336 660 371 624 404 575"
+            fill="none" stroke="#65EEFF" stroke-width="10" stroke-linecap="round" opacity="0.72"/>
+      <path d="M640 624C675 602 698 606 740 635"
+            fill="none" stroke="url(#ink)" stroke-width="18" stroke-linecap="round"/>
+      <path d="M738 635C753 646 765 655 776 661"
+            fill="none" stroke="#1737B8" stroke-width="7" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <path d="M290 776H734" fill="none" stroke="#10155D" stroke-width="10" stroke-linecap="round" opacity="0.17"/>
+</svg>

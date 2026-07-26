@@ -46,13 +46,21 @@ MultitouchSupport framework for per-finger contact size.
 
 ## Install
 
+**Download** — grab [TrackpadStudio.dmg](https://github.com/ZaynJarvis/trackpad-studio/releases/latest/download/TrackpadStudio.dmg),
+drag the app to Applications, then clear the quarantine flag once (the app is
+open source but not notarized with a paid Apple Developer ID):
+
+```bash
+xattr -cr /Applications/TrackpadStudio.app
+```
+
+**Or build from source** (macOS 13+, Swift 5.9+ / Xcode command line tools):
+
 ```bash
 git clone https://github.com/ZaynJarvis/trackpad-studio
 cd trackpad-studio
-swift run TrackpadStudio
+./make-app.sh          # → TrackpadStudio.app (or: swift run TrackpadStudio)
 ```
-
-Requires macOS 13+ and Swift 5.9+ (Xcode command line tools).
 
 ## Controls
 
@@ -63,6 +71,7 @@ Requires macOS 13+ and Swift 5.9+ (Xcode command line tools).
 | 3 fingers | force-draw with the current tool (leftmost finger is the pen) |
 | `1`–`5` | select tool |
 | `T` | one-shot text at the cursor |
+| `[` / `]` | touch level — lower/raise the contact size where a touch starts drawing (persisted; trackpads vary) |
 | `⌘Z` / `⌘⌫` | undo / clear |
 | `Esc` | toggle Zen ⇄ Pointer mode |
 | `⌘T` / `?` | open the trackpad tutorial |

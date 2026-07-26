@@ -35,7 +35,7 @@
   "applicationCategory": "DesignApplication",
   "operatingSystem": "macOS 13.0 or later",
   "url": "https://canvas.zaynjarvis.com/",
-  "downloadUrl": "https://github.com/ZaynJarvis/trackpad-studio",
+  "downloadUrl": "https://github.com/ZaynJarvis/trackpad-studio/releases/latest/download/TrackpadStudio.dmg",
   "codeRepository": "https://github.com/ZaynJarvis/trackpad-studio",
   "screenshot": [
     "https://canvas.zaynjarvis.com/assets/board.png",
@@ -395,7 +395,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 72px}
       <h1><span data-i18n="hero.h1a">Your trackpad has been a drawing surface</span> <span class="l2" data-i18n="hero.h1b">this whole time.</span></h1>
       <p class="lede sub" data-i18n="hero.lede">Trackpad Studio reads the raw multi-touch stream macOS keeps to itself: where every finger is, how hard it presses, how wide it lands. Draw at the exact spot your finger is touching — then poke around and find out what else the pad has been reporting all along.</p>
       <div class="cta">
-        <a class="btn mint" href="#install" data-i18n="hero.cta1">Build it in one command</a>
+        <a class="btn mint" href="#install" data-i18n="hero.cta1">Download for Mac</a>
         <a class="btn" href="https://github.com/ZaynJarvis/trackpad-studio" rel="noopener" data-i18n="hero.cta2">Read the source</a>
       </div>
     </div>
@@ -586,8 +586,19 @@ footer{border-top:1px solid var(--line);padding:56px 0 72px}
 <!-- ─────────────── install ─────────────── -->
 <section class="wrap sec" id="install">
   <p class="eyebrow" data-i18n="ins.eyebrow">Install</p>
-  <h2 data-i18n="ins.h2">Three lines and about a minute</h2>
-  <p class="sub" data-i18n="ins.p">You need the Xcode command line tools with Swift 5.9 or newer. There are no prebuilt binaries yet, so the first run compiles from source.</p>
+  <h2 data-i18n="ins.h2">Download the DMG, or build it in a minute</h2>
+  <p class="sub" data-i18n="ins.p">Download the app, drag it to Applications, then run one command in Terminal. The app is open source but not notarized with a paid Apple Developer ID, so macOS quarantines the download until you clear the flag:</p>
+
+  <div class="code frame">
+    <span class="brk"></span>
+    <div><span class="p">$ </span>xattr -cr /Applications/TrackpadStudio.app</div>
+  </div>
+  <div class="install-row">
+    <a class="btn mint" href="https://github.com/ZaynJarvis/trackpad-studio/releases/latest/download/TrackpadStudio.dmg" data-i18n="ins.dmg">Download TrackpadStudio.dmg</a>
+    <a class="btn" href="https://github.com/ZaynJarvis/trackpad-studio" rel="noopener" data-i18n="ins.repo">Open the repository</a>
+  </div>
+
+  <p class="sub" data-i18n="ins.src" style="margin-top:34px">Prefer to compile it yourself? Xcode command line tools with Swift 5.9 or newer:</p>
 
   <div class="code frame" id="cmd">
     <span class="brk"></span>
@@ -596,8 +607,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 72px}
     <div><span class="p">$ </span>swift run TrackpadStudio</div>
   </div>
   <div class="install-row">
-    <button class="btn mint" id="copy" type="button" data-i18n="ins.copy">Copy the commands</button>
-    <a class="btn" href="https://github.com/ZaynJarvis/trackpad-studio" rel="noopener" data-i18n="ins.repo">Open the repository</a>
+    <button class="btn" id="copy" type="button" data-i18n="ins.copy">Copy the commands</button>
   </div>
   <p class="note" data-i18n-html="ins.note"><b>Optional:</b> the per-finger size, contact ellipse and weight card read from a private macOS framework, which needs Input Monitoring under System Settings → Privacy &amp; Security. Skip it and the app still runs — those three cards simply report themselves unavailable.</p>
 </section>
@@ -683,7 +693,7 @@ var T = {
 "hero.h1a":["Your trackpad has been a drawing surface","你的触控板一直是块画布"],
 "hero.h1b":["this whole time.","只是没人告诉你"],
 "hero.lede":["Trackpad Studio reads the raw multi-touch stream macOS keeps to itself: where every finger is, how hard it presses, how wide it lands. Draw at the exact spot your finger is touching — then poke around and find out what else the pad has been reporting all along.","Trackpad Studio 直接读取 macOS 自己留着用的原始多点触控数据：每根手指在哪、按得多重、接触面多大。手指落在哪，笔画就出现在哪——顺手还能翻出触控板这些年一直在上报、却从没人看过的其他信号。"],
-"hero.cta1":["Build it in one command","一条命令跑起来"],
+"hero.cta1":["Download for Mac","下载 Mac 版"],
 "hero.cta2":["Read the source","看源码"],
 "rail.free":["free","免费"],
 "rail.deps":["dependencies","个第三方依赖"],
@@ -755,8 +765,10 @@ var T = {
 "tour.l4":["The weight card sits on top with its own tare button and grams-per-unit slider.","重量卡片排在最上面，自带归零按钮和「克/单位」滑杆。"],
 
 "ins.eyebrow":["Install","安装"],
-"ins.h2":["Three lines and about a minute","三行命令，大约一分钟"],
-"ins.p":["You need the Xcode command line tools with Swift 5.9 or newer. There are no prebuilt binaries yet, so the first run compiles from source.","需要 Xcode 命令行工具，Swift 5.9 或更高版本。目前还没有打包好的二进制，第一次运行会从源码编译。"],
+"ins.h2":["Download the DMG, or build it in a minute","下载 DMG，或者一分钟编译好"],
+"ins.p":["Download the app, drag it to Applications, then run one command in Terminal. The app is open source but not notarized with a paid Apple Developer ID, so macOS quarantines the download until you clear the flag:","下载后把应用拖进「应用程序」，然后在终端里跑一条命令。应用是开源的，但没花钱买 Apple 开发者证书做公证，macOS 会隔离下载的文件，需要手动解除："],
+"ins.dmg":["Download TrackpadStudio.dmg","下载 TrackpadStudio.dmg"],
+"ins.src":["Prefer to compile it yourself? Xcode command line tools with Swift 5.9 or newer:","想自己编译？需要 Xcode 命令行工具，Swift 5.9 或更高版本："],
 "ins.copy":["Copy the commands","复制命令"],
 "ins.copied":["Copied","已复制"],
 "ins.repo":["Open the repository","打开仓库"],
