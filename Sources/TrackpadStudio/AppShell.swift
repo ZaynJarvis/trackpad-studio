@@ -18,6 +18,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
            CommandLine.arguments.count > idx + 1 {
             runSnapshotMode(directory: CommandLine.arguments[idx + 1])
         }
+
+        if let idx = CommandLine.arguments.firstIndex(of: "--ai-test"),
+           CommandLine.arguments.count > idx + 1 {
+            runAITestMode(directory: CommandLine.arguments[idx + 1])
+        }
+    }
+
+    /// End-to-end smoke test for the ⌘G AI redraw: seed demo content, run the
+    /// real codex+imagegen pipeline, write before/after PNGs, quit.
+    private func runAITestMode(directory: String) {
+        let dir = URL(fileURLWithPath: directory, isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        boardView?.seedDemoContent()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+            if let board = window?.contentView {
+                writePNG(of: board, to: dir.appendingPathComponent("ai-before.png"))
+            }
+            boardView?.runAIRedraw { [self] in
+                if let board = window?.contentView {
+                    writePNG(of: board, to: dir.appendingPathComponent("ai-after.png"))
+                }
+                NSApp.terminate(nil)
+            }
+        }
     }
 
     /// Self-screenshot mode: renders the board (with demo content) and the

@@ -104,6 +104,10 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     /// Offset from the text editor's frame origin to where its glyphs actually sit.
     private let textEditorTextInset = CGSize(width: 2, height: 5)
 
+    private let aiSpinner = NSProgressIndicator()
+    private var aiRunning = false
+    private var aiStatusText: String?
+
     override var acceptsFirstResponder: Bool { true }
     override var isFlipped: Bool { false }
 
@@ -117,6 +121,12 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
             self?.handle(event)
         }
         addSubview(captureView)
+
+        aiSpinner.style = .spinning
+        aiSpinner.controlSize = .small
+        aiSpinner.isDisplayedWhenStopped = false
+        aiSpinner.appearance = NSAppearance(named: .darkAqua)
+        addSubview(aiSpinner)
 
         let timer = Timer(timeInterval: 1.0 / 60.0, repeats: true) {
             [weak self] _ in
@@ -191,6 +201,13 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     override func layout() {
         super.layout()
         positionTextEditor()
+        // Top-right, left of the container's "?" help button.
+        aiSpinner.frame = CGRect(
+            x: bounds.maxX - 52,
+            y: bounds.maxY - 30,
+            width: 18,
+            height: 18
+        )
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -455,6 +472,11 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         let lowercased = chars.lowercased()
 
         if significantModifiers.contains(.command) {
+            if lowercased == "g" {
+                runAIRedraw()
+                return
+            }
+
             if lowercased == "z" {
                 cancelActiveDraft()
                 _ = model.undo()
@@ -509,6 +531,203 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
             enterPointerMode()
         } else {
             enterZenMode()
+        }
+    }
+
+    // MARK: - AI redraw (⌘G)
+
+    /// Codex must answer with exactly this JSON shape.
+    private struct AIRedrawResult: Decodable {
+        let path: String
+    }
+
+    private struct AIRedrawError: Error {
+        let message: String
+    }
+
+    private static var codexPath: String? {
+        ["/opt/homebrew/bin/codex", "/usr/local/bin/codex"].first {
+            FileManager.default.isExecutableFile(atPath: $0)
+        }
+    }
+
+    /// ⌘G: snapshot the visible canvas to /tmp, have `codex exec` compose an
+    /// imagegen prompt and generate a redrawn PNG, then swap the board content
+    /// for the result. One operation: spinner while running, one ⌘Z rolls it
+    /// back.
+    func runAIRedraw(completion: (() -> Void)? = nil) {
+        guard !aiRunning else { return }
+        guard !model.elements.isEmpty else {
+            flashAIStatus("AI: nothing to redraw")
+            completion?()
+            return
+        }
+        guard let codex = Self.codexPath else {
+            flashAIStatus("AI: codex CLI not found")
+            completion?()
+            return
+        }
+
+        // Capture the canvas rect now so the result lands exactly where the
+        // snapshot was taken, even if the user pans/zooms while codex runs.
+        let rect = contentRect
+        let a = model.viewToCanvas(rect.origin, in: bounds)
+        let b = model.viewToCanvas(CGPoint(x: rect.maxX, y: rect.maxY), in: bounds)
+        let canvasRect = CGRect(
+            x: min(a.x, b.x),
+            y: min(a.y, b.y),
+            width: abs(b.x - a.x),
+            height: abs(b.y - a.y)
+        )
+
+        guard let snapshotURL = writeCanvasSnapshot(of: rect) else {
+            flashAIStatus("AI: snapshot failed")
+            completion?()
+            return
+        }
+
+        aiRunning = true
+        aiSpinner.startAnimation(nil)
+        needsDisplay = true
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let outcome = Self.runCodexRedraw(codex: codex, snapshot: snapshotURL)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.aiRunning = false
+                self.aiSpinner.stopAnimation(nil)
+                switch outcome {
+                case let .success(image):
+                    self.model.replaceAll(
+                        with: .image(rect: canvasRect, image: image)
+                    )
+                case let .failure(error):
+                    self.flashAIStatus("AI: " + error.message)
+                }
+                self.needsDisplay = true
+                completion?()
+            }
+        }
+    }
+
+    /// Renders the board content (background + elements only, no UI chrome)
+    /// as currently framed, and writes it to /tmp for codex to look at.
+    private func writeCanvasSnapshot(of rect: CGRect) -> URL? {
+        let image = NSImage(size: rect.size)
+        image.lockFocus()
+        let transform = NSAffineTransform()
+        transform.translateX(by: -rect.minX, yBy: -rect.minY)
+        transform.concat()
+        NSColor(calibratedWhite: 0.075, alpha: 1).setFill()
+        NSBezierPath(rect: rect).fill()
+        model.elements.forEach { draw(element: $0) }
+        image.unlockFocus()
+
+        guard let tiff = image.tiffRepresentation,
+              let rep = NSBitmapImageRep(data: tiff),
+              let png = rep.representation(using: .png, properties: [:])
+        else { return nil }
+
+        let url = URL(fileURLWithPath: String(
+            format: "/tmp/trackpadstudio-board-%.0f.png",
+            Date().timeIntervalSince1970
+        ))
+        do {
+            try png.write(to: url)
+            return url
+        } catch {
+            return nil
+        }
+    }
+
+    /// Blocking; call off the main thread. Codex composes the imagegen prompt
+    /// itself and must reply with strict JSON {"path": "..."}.
+    private static func runCodexRedraw(
+        codex: String,
+        snapshot: URL
+    ) -> Result<NSImage, AIRedrawError> {
+        let outputPath = snapshot.path + ".result.txt"
+        let prompt = """
+        Attached is a snapshot of a hand-drawn digital whiteboard: light ink \
+        on a dark canvas. Compose the best imagegen prompt yourself to redraw \
+        ONLY the drawn content as a polished, beautiful version of itself: \
+        keep the composition, layout and content recognizably identical, with \
+        clean, confident linework and tasteful colors that read well on a dark \
+        canvas. Generate it with your native imagegen tool in landscape \
+        orientation on a fully TRANSPARENT background — alpha transparency \
+        everywhere except the strokes themselves; no background color, no \
+        canvas, no vignette, no frame. Save the PNG under the current \
+        directory. Reply with ONLY this strict JSON and nothing else: \
+        {"path": "/absolute/path/to/generated.png"}
+        """
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: codex)
+        process.arguments = [
+            "exec",
+            "--skip-git-repo-check",
+            "-s", "workspace-write",
+            // Fast redraw beats deep reasoning here: the heavy lifting is
+            // imagegen's, codex only composes the prompt.
+            "-m", "gpt-5.6-terra",
+            "-c", "model_reasoning_effort=\"medium\"",
+            "-C", "/tmp",
+            "-o", outputPath,
+            "-i", snapshot.path,
+            "--", prompt,
+        ]
+        // Finder-launched apps have a bare PATH; codex is a node script and
+        // needs its interpreter findable.
+        var environment = ProcessInfo.processInfo.environment
+        environment["PATH"] = "/opt/homebrew/bin:/usr/local/bin:"
+            + (environment["PATH"] ?? "/usr/bin:/bin")
+        process.environment = environment
+
+        // Drain output so codex can't block on a full pipe.
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+
+        do {
+            try process.run()
+        } catch {
+            return .failure(AIRedrawError(message: "codex failed to start"))
+        }
+
+        // ponytail: hard 5-minute cap, no partial progress from codex
+        let timeout = DispatchWorkItem { process.terminate() }
+        DispatchQueue.global().asyncAfter(deadline: .now() + 300, execute: timeout)
+        pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        timeout.cancel()
+
+        guard process.terminationStatus == 0 else {
+            return .failure(AIRedrawError(
+                message: "codex exited \(process.terminationStatus)"
+            ))
+        }
+        guard let reply = try? String(
+                contentsOfFile: outputPath, encoding: .utf8
+            ),
+            let start = reply.firstIndex(of: "{"),
+            let end = reply.lastIndex(of: "}"),
+            let json = String(reply[start...end]).data(using: .utf8),
+            let result = try? JSONDecoder().decode(AIRedrawResult.self, from: json)
+        else {
+            return .failure(AIRedrawError(message: "no JSON path in reply"))
+        }
+        guard let image = NSImage(contentsOfFile: result.path) else {
+            return .failure(AIRedrawError(message: "unreadable result image"))
+        }
+        return .success(image)
+    }
+
+    private func flashAIStatus(_ message: String) {
+        aiStatusText = message
+        needsDisplay = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            self?.aiStatusText = nil
+            self?.needsDisplay = true
         }
     }
 
@@ -1251,6 +1470,14 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
                     .foregroundColor: color.withAlphaComponent(alpha),
                 ]
             )
+
+        case let .image(rect, image):
+            image.draw(
+                in: model.canvasToView(rect, in: bounds),
+                from: .zero,
+                operation: .sourceOver,
+                fraction: alpha
+            )
         }
     }
 
@@ -1835,6 +2062,14 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
                 color: active ? inkColor : mutedColor
             )
             x += textWidth(touchText, font: zoomFont) + 10
+        }
+
+        if let aiText = aiStatusText ?? (aiRunning ? "AI redraw…" : nil) {
+            let color = aiRunning
+                ? inkColor.withAlphaComponent(0.8)
+                : NSColor.systemOrange
+            drawLabel(aiText, at: CGPoint(x: x, y: baseline), font: bodyFont, color: color)
+            x += textWidth(aiText, font: bodyFont) + 10
         }
 
         if let live = isTwoFingerNavigating

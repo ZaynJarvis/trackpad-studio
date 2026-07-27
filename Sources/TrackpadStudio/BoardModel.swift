@@ -36,6 +36,7 @@ enum BoardElement {
     case ellipse(rect: CGRect, width: CGFloat, color: NSColor)
     case arrow(start: CGPoint, end: CGPoint, width: CGFloat, color: NSColor)
     case text(origin: CGPoint, string: String, fontSize: CGFloat, color: NSColor)
+    case image(rect: CGRect, image: NSImage)
 }
 
 final class BoardModel {
@@ -79,18 +80,37 @@ final class BoardModel {
         )
     }
 
+    /// What each AI redraw replaced, so undoing the redraw restores it.
+    private var replacedElementsStack: [[BoardElement]] = []
+
     func append(_ element: BoardElement) {
         elements.append(element)
         hasCreatedContent = true
     }
 
+    /// AI redraw: swaps the whole board for one image element as a single
+    /// operation — one ⌘Z brings the replaced drawing back.
+    func replaceAll(with element: BoardElement) {
+        replacedElementsStack.append(elements)
+        elements = [element]
+        hasCreatedContent = true
+    }
+
     @discardableResult
     func undo() -> BoardElement? {
-        elements.popLast()
+        guard let popped = elements.popLast() else { return nil }
+        // An image at the bottom of the stack can only be an AI redraw;
+        // undoing it restores everything it replaced.
+        if case .image = popped, elements.isEmpty,
+           let restored = replacedElementsStack.popLast() {
+            elements = restored
+        }
+        return popped
     }
 
     func clear() {
         elements.removeAll(keepingCapacity: true)
+        replacedElementsStack.removeAll()
     }
 
     /// Applies a scale step while keeping the canvas point under the view center fixed.
@@ -209,6 +229,11 @@ final class BoardModel {
             let font = NSFont.systemFont(ofSize: fontSize)
             let size = (string as NSString).size(withAttributes: [.font: font])
             return CGRect(origin: origin, size: size)
+                .insetBy(dx: -tolerance, dy: -tolerance)
+                .contains(point)
+
+        case let .image(rect, _):
+            return rect.standardized
                 .insetBy(dx: -tolerance, dy: -tolerance)
                 .contains(point)
         }

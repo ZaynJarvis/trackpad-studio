@@ -72,6 +72,7 @@ cd trackpad-studio
 | `1`–`5` | select tool |
 | `T` | one-shot text at the cursor |
 | `[` / `]` | touch level — lower/raise the contact size where a touch starts drawing (persisted; trackpads vary) |
+| `⌘G` | AI redraw — snapshots the board to /tmp, `codex` + imagegen repaint it, result replaces the board (spinner top-right; one `⌘Z` rolls it back) |
 | `⌘Z` / `⌘⌫` | undo / clear |
 | `Esc` | toggle Zen ⇄ Pointer mode |
 | `⌘T` / `?` | open the trackpad tutorial |
