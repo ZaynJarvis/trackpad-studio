@@ -684,10 +684,11 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         keep the composition, layout and content recognizably identical, with \
         clean, confident linework and tasteful colors that read well on a dark \
         canvas. Generate it with your native imagegen tool in landscape \
-        orientation on a fully TRANSPARENT background (use the imagegen \
-        transparent-background option if available). If true transparency is \
-        not possible, use a PURE BLACK background instead — never any other \
-        color, no vignette, no frame. Save the PNG under the current \
+        orientation on a PURE BLACK (#000000) background — the app keys black \
+        out afterwards, so black IS the transparency. Only pass the imagegen \
+        tool's transparent-background parameter if it exposes one; NEVER \
+        represent transparency in pixels: no green screen, no checkerboard, \
+        no gray matte, no vignette, no frame. Save the PNG under the current \
         directory. Reply with ONLY this strict JSON and nothing else: \
         {"path": "/absolute/path/to/generated.png"}
         """
