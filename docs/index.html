@@ -393,7 +393,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 72px}
     <div>
       <p class="eyebrow" data-i18n="hero.eyebrow">macOS 13+ · Swift · AppKit · MIT</p>
       <h1><span data-i18n="hero.h1a">Your trackpad has been a drawing surface</span> <span class="l2" data-i18n="hero.h1b">this whole time.</span></h1>
-      <p class="lede sub" data-i18n="hero.lede">Trackpad Studio reads the raw multi-touch stream macOS keeps to itself: where every finger is, how hard it presses, how wide it lands. Draw at the exact spot your finger is touching — then poke around and find out what else the pad has been reporting all along.</p>
+      <p class="lede sub" data-i18n="hero.lede">macOS knows where every finger is, how hard it presses, how wide it lands — it just never shows you. Trackpad Studio reads that stream and turns the pad into a canvas: ink lands exactly where your finger touches.</p>
       <div class="cta">
         <a class="btn mint" href="#install" data-i18n="hero.cta1">Download for Mac</a>
         <a class="btn" href="https://github.com/ZaynJarvis/trackpad-studio" rel="noopener" data-i18n="hero.cta2">Read the source</a>
@@ -427,7 +427,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 72px}
       <p class="eyebrow r" data-i18n="arg.eyebrow">The web only gets a mouse</p>
       <h2 data-i18n="arg.h2">Drag inside the box.</h2>
       <p class="sub" data-i18n="arg.p1">This is the whole of what a browser receives from your trackpad: one point, no pressure, relative motion. Put a second finger down — the counter stays at 1.</p>
-      <p class="sub" data-i18n="arg.p2">macOS knows far more, and it hands that over only to native code: per-finger absolute coordinates from NSTouch, contact ellipses and capacitive size from a private framework, pressure from Force Touch. That gap is the entire reason this app exists.</p>
+      <p class="sub" data-i18n="arg.p2">The real data goes only to native code: absolute per-finger coordinates, contact ellipses, Force Touch pressure. That gap is why this app exists.</p>
     </div>
     <div class="pad-demo frame">
       <span class="brk"></span>
@@ -457,7 +457,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 72px}
       <p class="eyebrow" data-i18n="caps.eyebrow">Guided tour · 8 capabilities</p>
       <h2 data-i18n="caps.h2">What your trackpad can secretly do</h2>
     </div>
-    <p style="max-width:46ch;font-size:.94rem" data-i18n="caps.sub">The app ships a tutorial panel with one card per capability. Each stays dashed until you actually perform the gesture, then ticks over to ✓. Nothing is unlocked by reading.</p>
+    <p style="max-width:46ch;font-size:.94rem" data-i18n="caps.sub">One card per capability. Each stays dashed until you actually perform the gesture — nothing unlocks by reading.</p>
   </div>
 
   <div class="grid">
@@ -473,7 +473,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 72px}
     <div class="weight">
       <div>
         <h3><span data-i18n="w.t">Weight estimate</span> <span class="tagx" data-i18n="w.tag">experimental</span></h3>
-        <p data-i18n="w.d">Capacitive contact size grows with how hard something presses, so the pad can be talked into behaving like a very rough scale. Clear the pad, tare it, set a spoon down, then slide grams-per-unit until a known weight reads true. It is a party trick with a plausible number attached, not a kitchen scale.</p>
+        <p data-i18n="w.d">Contact size grows with pressure, so the pad can be talked into being a very rough scale: tare, set something down, calibrate against a known weight. A party trick with a plausible number — not a kitchen scale.</p>
         <p data-i18n="w.d2">Per-finger data needs Input Monitoring permission. Without it the app drops the size-based features and everything else keeps working.</p>
       </div>
       <div class="gauge">
@@ -493,7 +493,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 72px}
     <span class="zen-badge">ZEN</span>
     <div>
       <h3 data-i18n="zen.t">Zen mode freezes the pointer</h3>
-      <p data-i18n-html="zen.d">The moment a finger lands, the system cursor is frozen and hidden, so drawing never drags focus across your desktop. It comes back the instant the last finger lifts, the window loses focus, or you press <kbd>Esc</kbd>.</p>
+      <p data-i18n-html="zen.d">A finger lands: the cursor freezes and hides. It's back the instant the last finger lifts, focus moves, or you press <kbd>Esc</kbd>.</p>
     </div>
   </div>
 
@@ -508,7 +508,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 72px}
         <path d="M27 25l3 3 3-3" stroke="#ffd06c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
       </svg>
       <h3 data-i18n="g1.t">Force sets the width</h3>
-      <p data-i18n="g1.d">A light touch is only a cursor. Press and the stroke thickens under your finger — Force Touch pressure drives the line weight directly.</p>
+      <p data-i18n="g1.d">A light touch is just a cursor; press, and pressure thickens the stroke under your finger.</p>
     </article>
 
     <article class="gcard">
@@ -520,7 +520,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 72px}
         <path d="M14 12l-5-4M50 33l6 4" stroke="#9cd2ff" stroke-width="1.6" stroke-linecap="round"/>
       </svg>
       <h3 data-i18n="g2.t">Zoom and pan, one gesture</h3>
-      <p data-i18n="g2.d">Two fingers scale and move the canvas at the same time. Both are computed from the raw touch positions, which sidesteps macOS gesture exclusivity — you never have to pick one or the other.</p>
+      <p data-i18n="g2.d">Two fingers zoom and pan at once, computed from raw touches — no gesture exclusivity, no picking one or the other.</p>
     </article>
 
     <article class="gcard">
@@ -532,7 +532,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 72px}
         <path d="M48 27l4 3-4 3" stroke="#6adfb5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
       </svg>
       <h3 data-i18n="g3.t">Three-finger drag draws</h3>
-      <p data-i18n="g3.d">Drop three fingers and the current tool commits a stroke without any pressure at all. The leftmost finger is the pen; the other two are just there to say you mean it.</p>
+      <p data-i18n="g3.d">Three fingers down and the current tool draws at full force. The leftmost finger is the pen.</p>
     </article>
 
     <article class="gcard">
@@ -543,7 +543,17 @@ footer{border-top:1px solid var(--line);padding:56px 0 72px}
         <circle cx="11" cy="32" r="7" fill="none" stroke="#ff8cbb" stroke-width="1.5" stroke-dasharray="3 3" opacity=".7"/>
       </svg>
       <h3 data-i18n="g4.t">Resting fingers stay out of it</h3>
-      <p data-i18n="g4.d">Thumbs and palms parked on the pad render as ghost rings and are filtered out of every gesture calculation, so leaning on the trackpad does not throw your zoom around.</p>
+      <p data-i18n="g4.d">Parked thumbs and palms show as ghost rings and are filtered out of every gesture — leaning on the pad breaks nothing.</p>
+    </article>
+
+    <article class="gcard">
+      <svg width="64" height="44" viewBox="0 0 64 44" aria-hidden="true">
+        <path d="M24 8l2.6 6.4L33 17l-6.4 2.6L24 26l-2.6-6.4L15 17l6.4-2.6z" fill="none" stroke="#8ff0c0" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M43 24l1.7 4.3L49 30l-4.3 1.7L43 36l-1.7-4.3L37 30l4.3-1.7z" fill="#8ff0c0" opacity=".8"/>
+        <path d="M10 36c12-6 30-6 44-2" stroke="#8ff0c0" stroke-width="2" stroke-linecap="round" fill="none" opacity=".5"/>
+      </svg>
+      <h3 data-i18n="g5.t">⌘G hands it to AI</h3>
+      <p data-i18n="g5.d">One keystroke sends the board to codex + imagegen, which swap in a polished transparent repaint. One ⌘Z brings every stroke back.</p>
     </article>
   </div>
 
@@ -692,7 +702,7 @@ var T = {
 "hero.eyebrow":["macOS 13+ · Swift · AppKit · MIT","macOS 13+ · Swift · AppKit · MIT"],
 "hero.h1a":["Your trackpad has been a drawing surface","你的触控板一直是块画布"],
 "hero.h1b":["this whole time.","只是没人告诉你"],
-"hero.lede":["Trackpad Studio reads the raw multi-touch stream macOS keeps to itself: where every finger is, how hard it presses, how wide it lands. Draw at the exact spot your finger is touching — then poke around and find out what else the pad has been reporting all along.","Trackpad Studio 直接读取 macOS 自己留着用的原始多点触控数据：每根手指在哪、按得多重、接触面多大。手指落在哪，笔画就出现在哪——顺手还能翻出触控板这些年一直在上报、却从没人看过的其他信号。"],
+"hero.lede":["macOS knows where every finger is, how hard it presses, how wide it lands — it just never shows you. Trackpad Studio reads that stream and turns the pad into a canvas: ink lands exactly where your finger touches.","macOS 一直知道每根手指在哪、按得多重、接触面多大——只是从不给你看。Trackpad Studio 读出这条数据流，把触控板变成画布：手指落在哪，墨就落在哪。"],
 "hero.cta1":["Download for Mac","下载 Mac 版"],
 "hero.cta2":["Read the source","看源码"],
 "rail.free":["free","免费"],
@@ -706,7 +716,7 @@ var T = {
 "arg.eyebrow":["The web only gets a mouse","浏览器只拿得到一个鼠标"],
 "arg.h2":["Drag inside the box.","在框里拖一下试试"],
 "arg.p1":["This is the whole of what a browser receives from your trackpad: one point, no pressure, relative motion. Put a second finger down — the counter stays at 1.","浏览器能从触控板拿到的信息，全在这儿了：一个点、没有压力、只有相对位移。再放一根手指上去试试——计数还是 1。"],
-"arg.p2":["macOS knows far more, and it hands that over only to native code: per-finger absolute coordinates from NSTouch, contact ellipses and capacitive size from a private framework, pressure from Force Touch. That gap is the entire reason this app exists.","macOS 知道的比这多得多，但它只把这些交给原生代码：NSTouch 给出每根手指的绝对坐标，私有框架给出接触椭圆和电容面积，Force Touch 给出压力。这道鸿沟就是这个应用存在的全部理由。"],
+"arg.p2":["The real data goes only to native code: absolute per-finger coordinates, contact ellipses, Force Touch pressure. That gap is why this app exists.","真实数据只交给原生代码：每根手指的绝对坐标、接触椭圆、Force Touch 压力。这道鸿沟就是这个应用存在的理由。"],
 "demo.aria":["A scratch canvas showing what a browser can read from a pointer","一块演示用画布，展示浏览器能从指针拿到什么"],
 "demo.hint":["drag here","在这里拖动"],
 "demo.points":["Points","触点"],
@@ -718,7 +728,7 @@ var T = {
 
 "caps.eyebrow":["Guided tour · 8 capabilities","引导教程 · 8 项能力"],
 "caps.h2":["What your trackpad can secretly do","触控板背着你能做的事"],
-"caps.sub":["The app ships a tutorial panel with one card per capability. Each stays dashed until you actually perform the gesture, then ticks over to ✓. Nothing is unlocked by reading.","应用内置一块教程面板，一项能力一张卡片。你不真做出那个动作，卡片就一直是横线；做出来了才变成 ✓。光看是解锁不了的。"],
+"caps.sub":["One card per capability. Each stays dashed until you actually perform the gesture — nothing unlocks by reading.","一项能力一张卡片。不真做出那个动作，卡片就一直是横线——光看解锁不了。"],
 "c1.t":["Multi-touch tracking","多点追踪"],
 "c1.d":["Rest 1–5 fingers anywhere on the pad","1 到 5 根手指，随便放在板子上"],
 "c2.t":["Absolute position","绝对位置"],
@@ -737,22 +747,24 @@ var T = {
 "c8.d":["Park a thumb and leave it; it is counted, not obeyed","拇指搭着不动：它被数进去，但不参与手势"],
 "w.t":["Weight estimate","重量估算"],
 "w.tag":["experimental","实验性"],
-"w.d":["Capacitive contact size grows with how hard something presses, so the pad can be talked into behaving like a very rough scale. Clear the pad, tare it, set a spoon down, then slide grams-per-unit until a known weight reads true. It is a party trick with a plausible number attached, not a kitchen scale.","电容接触面积会随压力变大，所以触控板能被哄着当一杆很粗糙的秤用。清空板面、归零，放一把勺子上去，再拖动「克/单位」滑杆，直到某个已知重量读数对得上。它给的是一个看着靠谱的数字，是个把戏，不是厨房秤。"],
+"w.d":["Contact size grows with pressure, so the pad can be talked into being a very rough scale: tare, set something down, calibrate against a known weight. A party trick with a plausible number — not a kitchen scale.","接触面积随压力变大，触控板就能被哄着当杆糙秤：归零、放东西、按已知重量校准。是个带数字的把戏，不是厨房秤。"],
 "w.d2":["Per-finger data needs Input Monitoring permission. Without it the app drops the size-based features and everything else keeps working.","每指数据需要「输入监控」权限。不给也行，跟接触面积相关的几项会自动关掉，其余功能照常。"],
 "w.gauge":["net size 0.000","净面积 0.000"],
 
 "gest.eyebrow":["On the board","在画板上"],
 "gest.h2":["Fingers on the pad, cursor out of the way","手指落在板上，光标靠边站"],
 "zen.t":["Zen mode freezes the pointer","禅模式会把光标冻住"],
-"zen.d":["The moment a finger lands, the system cursor is frozen and hidden, so drawing never drags focus across your desktop. It comes back the instant the last finger lifts, the window loses focus, or you press <kbd>Esc</kbd>.","手指一落下，系统光标就被冻住并隐藏，画画时不会把焦点拖得满桌面跑。最后一根手指抬起、窗口失去焦点，或者你按 <kbd>Esc</kbd>，它立刻回来。"],
+"zen.d":["A finger lands: the cursor freezes and hides. It's back the instant the last finger lifts, focus moves, or you press <kbd>Esc</kbd>.","手指一落，光标就冻结隐藏；最后一根手指抬起、窗口失焦或按 <kbd>Esc</kbd>，立刻恢复。"],
 "g1.t":["Force sets the width","力度决定粗细"],
-"g1.d":["A light touch is only a cursor. Press and the stroke thickens under your finger — Force Touch pressure drives the line weight directly.","轻轻一碰只是个光标。压下去，笔画就在手指底下变粗——线宽直接由 Force Touch 压力驱动。"],
+"g1.d":["A light touch is just a cursor; press, and pressure thickens the stroke under your finger.","轻触只是光标；压下去，压力直接把笔画变粗。"],
 "g2.t":["Zoom and pan, one gesture","缩放和平移一气呵成"],
-"g2.d":["Two fingers scale and move the canvas at the same time. Both are computed from the raw touch positions, which sidesteps macOS gesture exclusivity — you never have to pick one or the other.","两根手指同时完成缩放和移动。两者都是从原始触点位置自己算出来的，绕开了 macOS 的手势互斥，不用在缩放和平移之间二选一。"],
+"g2.d":["Two fingers zoom and pan at once, computed from raw touches — no gesture exclusivity, no picking one or the other.","两指同时缩放平移，直接从原始触点算出，绕开手势互斥，不用二选一。"],
 "g3.t":["Three-finger drag draws","三指拖动即落笔"],
-"g3.d":["Drop three fingers and the current tool commits a stroke without any pressure at all. The leftmost finger is the pen; the other two are just there to say you mean it.","三根手指按上去，当前工具不需要任何压力就开始画。最左边那根是笔尖，另外两根只是用来表明你是认真的。"],
+"g3.d":["Three fingers down and the current tool draws at full force. The leftmost finger is the pen.","三指按下，当前工具满力作画；最左那根是笔尖。"],
 "g4.t":["Resting fingers stay out of it","静置的手指不掺和"],
-"g4.d":["Thumbs and palms parked on the pad render as ghost rings and are filtered out of every gesture calculation, so leaning on the trackpad does not throw your zoom around.","搭在板上的拇指和手掌会画成幽灵圆环，并从所有手势计算里剔除，所以手压着触控板也不会把画面缩放弄乱。"],
+"g4.d":["Parked thumbs and palms show as ghost rings and are filtered out of every gesture — leaning on the pad breaks nothing.","搭着的拇指手掌画成幽灵圆环，从所有手势里剔除——手压着板也不乱。"],
+"g5.t":["⌘G hands it to AI","⌘G 交给 AI 重画"],
+"g5.d":["One keystroke sends the board to codex + imagegen, which swap in a polished transparent repaint. One ⌘Z brings every stroke back.","一个快捷键把画板交给 codex + imagegen，换回一张精修的透明底重绘；⌘Z 一次全部撤回。"],
 "tools.aria":["The board toolbar: pen, line, rectangle, ellipse and arrow on keys 1 to 5, plus text on T","画板工具栏：数字键 1 到 5 对应画笔、直线、矩形、椭圆和箭头，T 对应文字"],
 "tools.note":["Keys 1–5 pick pen, line, rectangle, ellipse and arrow. <kbd>T</kbd> drops a text label that holds the same on-screen size however far you zoom in.","数字键 1–5 切换画笔、直线、矩形、椭圆和箭头。<kbd>T</kbd> 放下一段文字，无论画布放大到多少倍，它在屏幕上的字号都不变。"],
 
