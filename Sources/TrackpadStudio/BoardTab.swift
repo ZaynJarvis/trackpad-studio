@@ -685,12 +685,12 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         clean, confident linework and tasteful colors that read well on a dark \
         canvas. Generate it with your native imagegen tool in landscape \
         orientation on a PURE BLACK (#000000) background — the app keys black \
-        out afterwards, so black IS the transparency. Only pass the imagegen \
-        tool's transparent-background parameter if it exposes one; NEVER \
-        represent transparency in pixels: no green screen, no checkerboard, \
-        no gray matte, no vignette, no frame. Save the PNG under the current \
-        directory. Reply with ONLY this strict JSON and nothing else: \
-        {"path": "/absolute/path/to/generated.png"}
+        out afterwards, so black IS the transparency. NEVER represent \
+        transparency in pixels (no green screen, no checkerboard, no gray \
+        matte, no vignette, no frame) and do NOT chroma-key or post-process \
+        the image yourself — deliver the raw imagegen output. Save the PNG \
+        under the current directory. Reply with ONLY this strict JSON and \
+        nothing else: {"path": "/absolute/path/to/generated.png"}
         """
         if let guidance {
             prompt += "\n\nUser guidance for the repaint — follow it, it "
@@ -758,11 +758,14 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         return .success(transparentized(image))
     }
 
-    /// imagegen honors "transparent background" only sometimes. When the
-    /// result comes back opaque — light ink on a dark ground — recover the
-    /// alpha by unmultiplying the black: a pixel drawn on black holds exactly
-    /// its premultiplied color, so alpha = max(r, g, b) and the RGB bytes can
-    /// stay as-is. Genuinely transparent results pass through untouched.
+    /// imagegen can't be asked for real alpha (its tool exposes no background
+    /// parameter), so results arrive opaque on some solid ground — black when
+    /// the prompt is obeyed, occasionally a chroma green screen. Codex's own
+    /// pipeline keys this out with a soft matte (transparent/opaque distance
+    /// thresholds); same idea here: detect the border color, then unmix it
+    /// away under a soft alpha ramp. On a black ground this reduces to the
+    /// exact premultiplied-on-black recovery. Genuinely transparent results
+    /// pass through untouched.
     static func transparentized(_ image: NSImage) -> NSImage {
         guard let tiff = image.tiffRepresentation,
               let probe = NSBitmapImageRep(data: tiff) else { return image }
@@ -804,11 +807,53 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
         guard let data = out.bitmapData else { return image }
         let rowBytes = out.bytesPerRow
+
+        // Background = average of the 1px border ring.
+        var sumR = 0, sumG = 0, sumB = 0, count = 0
+        for y in 0..<h where y == 0 || y == h - 1 {
+            let row = data + y * rowBytes
+            for x in 0..<w {
+                let p = row + x * 4
+                sumR += Int(p[0]); sumG += Int(p[1]); sumB += Int(p[2])
+                count += 1
+            }
+        }
+        for y in 1..<(h - 1) {
+            let row = data + y * rowBytes
+            for x in [0, w - 1] {
+                let p = row + x * 4
+                sumR += Int(p[0]); sumG += Int(p[1]); sumB += Int(p[2])
+                count += 1
+            }
+        }
+        let bgR = sumR / count, bgG = sumG / count, bgB = sumB / count
+
+        // ponytail: fixed soft-matte thresholds; widen if fringes appear
+        let tTransparent = 12
+        let tOpaque = 64
+
         for y in 0..<h {
             let row = data + y * rowBytes
             for x in 0..<w {
                 let p = row + x * 4
-                p[3] = max(p[0], max(p[1], p[2]))
+                let d = max(
+                    abs(Int(p[0]) - bgR),
+                    max(abs(Int(p[1]) - bgG), abs(Int(p[2]) - bgB))
+                )
+                let a: Int
+                if d <= tTransparent {
+                    a = 0
+                } else if d >= tOpaque {
+                    a = 255
+                } else {
+                    a = (d - tTransparent) * 255 / (tOpaque - tTransparent)
+                }
+                // Premultiplied unmix: fg·a = pixel − bg·(1−a).
+                let keep = 255 - a
+                p[0] = UInt8(max(0, Int(p[0]) - bgR * keep / 255))
+                p[1] = UInt8(max(0, Int(p[1]) - bgG * keep / 255))
+                p[2] = UInt8(max(0, Int(p[2]) - bgB * keep / 255))
+                p[3] = UInt8(a)
             }
         }
 
