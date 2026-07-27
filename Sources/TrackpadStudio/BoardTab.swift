@@ -473,7 +473,7 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
 
         if significantModifiers.contains(.command) {
             if lowercased == "g" {
-                runAIRedraw()
+                promptedAIRedraw()
                 return
             }
 
@@ -551,11 +551,36 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         }
     }
 
-    /// ⌘G: snapshot the visible canvas to /tmp, have `codex exec` compose an
+    /// ⌘G entry point: asks for optional guidance first (style, changes…),
+    /// then runs the redraw. Empty guidance means a faithful polish.
+    private func promptedAIRedraw() {
+        guard !aiRunning, !model.elements.isEmpty else {
+            runAIRedraw()   // reuse its status messages for the guard cases
+            return
+        }
+
+        let alert = NSAlert()
+        alert.messageText = "AI Redraw"
+        alert.informativeText =
+            "Optional guidance for the repaint. Leave empty for a faithful polish."
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
+        field.placeholderString = "e.g. watercolor · blueprint · neon"
+        alert.accessoryView = field
+        alert.addButton(withTitle: "Redraw")
+        alert.addButton(withTitle: "Cancel")
+        alert.window.initialFirstResponder = field
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        let guidance = field.stringValue
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        runAIRedraw(guidance: guidance.isEmpty ? nil : guidance)
+    }
+
+    /// Snapshot the visible canvas to /tmp, have `codex exec` compose an
     /// imagegen prompt and generate a redrawn PNG, then swap the board content
     /// for the result. One operation: spinner while running, one ⌘Z rolls it
     /// back.
-    func runAIRedraw(completion: (() -> Void)? = nil) {
+    func runAIRedraw(guidance: String? = nil, completion: (() -> Void)? = nil) {
         guard !aiRunning else { return }
         guard !model.elements.isEmpty else {
             flashAIStatus("AI: nothing to redraw")
@@ -591,7 +616,11 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         needsDisplay = true
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let outcome = Self.runCodexRedraw(codex: codex, snapshot: snapshotURL)
+            let outcome = Self.runCodexRedraw(
+                codex: codex,
+                snapshot: snapshotURL,
+                guidance: guidance
+            )
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.aiRunning = false
@@ -644,22 +673,28 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
     /// itself and must reply with strict JSON {"path": "..."}.
     private static func runCodexRedraw(
         codex: String,
-        snapshot: URL
+        snapshot: URL,
+        guidance: String? = nil
     ) -> Result<NSImage, AIRedrawError> {
         let outputPath = snapshot.path + ".result.txt"
-        let prompt = """
+        var prompt = """
         Attached is a snapshot of a hand-drawn digital whiteboard: light ink \
         on a dark canvas. Compose the best imagegen prompt yourself to redraw \
         ONLY the drawn content as a polished, beautiful version of itself: \
         keep the composition, layout and content recognizably identical, with \
         clean, confident linework and tasteful colors that read well on a dark \
         canvas. Generate it with your native imagegen tool in landscape \
-        orientation on a fully TRANSPARENT background — alpha transparency \
-        everywhere except the strokes themselves; no background color, no \
-        canvas, no vignette, no frame. Save the PNG under the current \
+        orientation on a fully TRANSPARENT background (use the imagegen \
+        transparent-background option if available). If true transparency is \
+        not possible, use a PURE BLACK background instead — never any other \
+        color, no vignette, no frame. Save the PNG under the current \
         directory. Reply with ONLY this strict JSON and nothing else: \
         {"path": "/absolute/path/to/generated.png"}
         """
+        if let guidance {
+            prompt += "\n\nUser guidance for the repaint — follow it, it "
+                + "overrides the faithful-polish default: \(guidance)"
+        }
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: codex)
@@ -719,7 +754,66 @@ final class BoardTabView: NSView, NSTextFieldDelegate {
         guard let image = NSImage(contentsOfFile: result.path) else {
             return .failure(AIRedrawError(message: "unreadable result image"))
         }
-        return .success(image)
+        return .success(transparentized(image))
+    }
+
+    /// imagegen honors "transparent background" only sometimes. When the
+    /// result comes back opaque — light ink on a dark ground — recover the
+    /// alpha by unmultiplying the black: a pixel drawn on black holds exactly
+    /// its premultiplied color, so alpha = max(r, g, b) and the RGB bytes can
+    /// stay as-is. Genuinely transparent results pass through untouched.
+    static func transparentized(_ image: NSImage) -> NSImage {
+        guard let tiff = image.tiffRepresentation,
+              let probe = NSBitmapImageRep(data: tiff) else { return image }
+
+        let w = probe.pixelsWide
+        let h = probe.pixelsHigh
+        guard w > 2, h > 2 else { return image }
+
+        if probe.hasAlpha {
+            let corners = [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]
+            let transparentCorners = corners.filter {
+                (probe.colorAt(x: $0.0, y: $0.1)?.alphaComponent ?? 1) < 0.5
+            }
+            if !transparentCorners.isEmpty { return image }
+        }
+
+        guard let out = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: w,
+            pixelsHigh: h,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ) else { return image }
+
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: out)
+        image.draw(
+            in: CGRect(x: 0, y: 0, width: out.size.width, height: out.size.height),
+            from: .zero,
+            operation: .copy,
+            fraction: 1
+        )
+        NSGraphicsContext.restoreGraphicsState()
+
+        guard let data = out.bitmapData else { return image }
+        let rowBytes = out.bytesPerRow
+        for y in 0..<h {
+            let row = data + y * rowBytes
+            for x in 0..<w {
+                let p = row + x * 4
+                p[3] = max(p[0], max(p[1], p[2]))
+            }
+        }
+
+        let result = NSImage(size: image.size)
+        result.addRepresentation(out)
+        return result
     }
 
     private func flashAIStatus(_ message: String) {

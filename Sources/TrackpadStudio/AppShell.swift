@@ -23,6 +23,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
            CommandLine.arguments.count > idx + 1 {
             runAITestMode(directory: CommandLine.arguments[idx + 1])
         }
+
+        // Smoke test for the black-background keying: --keytest in.png out.png
+        if let idx = CommandLine.arguments.firstIndex(of: "--keytest"),
+           CommandLine.arguments.count > idx + 2 {
+            if let image = NSImage(contentsOfFile: CommandLine.arguments[idx + 1]),
+               let tiff = BoardTabView.transparentized(image).tiffRepresentation,
+               let rep = NSBitmapImageRep(data: tiff),
+               let png = rep.representation(using: .png, properties: [:]) {
+                try? png.write(
+                    to: URL(fileURLWithPath: CommandLine.arguments[idx + 2])
+                )
+            }
+            NSApp.terminate(nil)
+        }
     }
 
     /// End-to-end smoke test for the ⌘G AI redraw: seed demo content, run the
